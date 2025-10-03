@@ -1,6 +1,5 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'https://unpkg.com/three@0.160.0/examples/jsm/controls/OrbitControls.js';
-import { CSS2DRenderer, CSS2DObject } from 'https://unpkg.com/three@0.160.0/examples/jsm/renderers/CSS2DRenderer.js';
 
 // ======= CENA BÁSICA =======
 const canvas = document.getElementById('scene');
@@ -14,14 +13,8 @@ scene.background = new THREE.Color(0x0f1115);
 const camera = new THREE.PerspectiveCamera(55, innerWidth/innerHeight, 0.1, 200);
 camera.position.set(14, 10, 14);
 
-const labelRenderer = new CSS2DRenderer();
-labelRenderer.setSize(innerWidth, innerHeight);
-labelRenderer.domElement.style.position = 'fixed';
-labelRenderer.domElement.style.inset = '0';
-labelRenderer.domElement.style.pointerEvents = 'none';
-document.body.appendChild(labelRenderer.domElement);
-
-const controls = new OrbitControls(camera, labelRenderer.domElement);
+// OrbitControls agora usa o próprio canvas (removi CSS2DRenderer)
+const controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
 controls.target.set(0, 2.2, 0);
 
@@ -54,9 +47,8 @@ scene.add(ground);
 // ======= GRUPOS =======
 const gStructure = new THREE.Group();
 const gWater = new THREE.Group();
-const gLabels = new THREE.Group();
 const gWash = new THREE.Group(); // elementos de lava-rápido
-scene.add(gStructure, gWater, gLabels, gWash);
+scene.add(gStructure, gWater, gWash);
 
 // ======= PILARES (6) =======
 const pillarMat = new THREE.MeshStandardMaterial({color:new THREE.Color(getComputedStyle(document.documentElement).getPropertyValue('--pillar').trim())});
@@ -128,23 +120,9 @@ pipe2.position.set(L/2 - 3.55, 0.32, W/2 + 0.35);
 pipe2.userData = { name: 'Tubo para reservatório', desc:'Fecha o circuito entre bomba e reservatório.' };
 gStructure.add(pipe2);
 
-// ======= RÓTULOS (CSS2D) =======
-function addLabel(mesh, text){
-  const el = document.createElement('div'); el.className = 'lbl'; el.textContent = text;
-  const l = new CSS2DObject(el); l.position.set(0, (mesh.geometry.boundingBox?.max.y||0)+0.2, 0);
-  mesh.updateWorldMatrix(true, true);
-  mesh.add(l); gLabels.add(l);
-}
-[roof, gutterMain, gutterFront, downspout, filter, pump, tank].forEach(m=>{m.geometry.computeBoundingBox();});
-addLabel(roof, 'Telhado (captação)');
-addLabel(gutterMain, 'Calha principal');
-addLabel(downspout, 'Condutor vertical');
-addLabel(filter, 'Filtro');
-addLabel(pump, 'Bomba');
-addLabel(tank, 'Reservatório');
-
-// Rótulos desligados por padrão (visíveis apenas se habilitar no painel)
-gLabels.visible = false;
+// ======= (REMOVIDO) Rótulos CSS2D =======
+// Toda a lógica de CSS2DRenderer e addLabel foi removida
+// para evitar “cards” fixos na cena. O tooltip por hover permanece.
 
 // ======= FLUXO DE ÁGUA (linhas tracejadas animadas) =======
 const waterColor = new THREE.Color(getComputedStyle(document.documentElement).getPropertyValue('--water').trim());
@@ -214,7 +192,7 @@ for(let i=-20;i<=20;i++){
 const washer = new THREE.Mesh(new THREE.BoxGeometry(0.7,0.6,0.5), new THREE.MeshStandardMaterial({color:0x1565c0, metalness:.2, roughness:.7}));
 washer.position.set(-5.2, 0.31, -3.2); washer.userData = {name:'Lavadora pressão', desc:'Equipamento no canto traseiro esquerdo.'}; gWash.add(washer);
 const hoseCoil = new THREE.Mesh(new THREE.TorusGeometry(0.25, 0.06, 16, 64), new THREE.MeshStandardMaterial({color:0x111111, metalness:.3, roughness:.6}));
-hoseCoil.rotation.x = Math.PI/2; hoseCoil.position.set(-5.2, 0.55, -3.2); gWash.add(hoseCoil);
+h oseCoil.rotation.x = Math.PI/2; hoseCoil.position.set(-5.2, 0.55, -3.2); gWash.add(hoseCoil);
 const wand = new THREE.Mesh(new THREE.CylinderGeometry(0.015,0.015,1.1,16), new THREE.MeshStandardMaterial({color:0x212121}));
 wand.rotation.z = Math.PI/5; wand.position.set(-4.5, 0.6, -2.7); gWash.add(wand);
 
@@ -233,7 +211,7 @@ arch.rotation.z = Math.PI; arch.rotation.y = Math.PI/2; arch.position.set(-3,1.4
 
 const bench = new THREE.Mesh(new THREE.BoxGeometry(2.2,0.1,0.7), new THREE.MeshStandardMaterial({color:0x424242}));
 bench.position.set(-6.5,0.55,2.6); gWash.add(bench);
-const legsGeom = new THREE.CylinderGeometry(0.05,0.05,0.6,16);
+const legsGeom = new THREE.CylinderGeometry(0.05, 0.05, 0.6, 16);
 function leg(dx,dz){ const l = new THREE.Mesh(legsGeom, new THREE.MeshStandardMaterial({color:0x2b2b2b})); l.position.set(-6.5+dx,0.3,2.6+dz); gWash.add(l);} 
 leg(-1, -0.3); leg(1, -0.3); leg(-1, 0.3); leg(1, 0.3);
 
@@ -269,7 +247,6 @@ let highlighted = null;
 // ======= CONTROLES DE CÂMERA =======
 const toggleWater = document.getElementById('toggleWater');
 const toggleRain = document.getElementById('toggleRain');
-const toggleLabels = document.getElementById('toggleLabels');
 const toggleAuto = document.getElementById('toggleAuto');
 const speed = document.getElementById('speed');
 const speedVal = document.getElementById('speedVal');
@@ -282,7 +259,6 @@ const exportBtn = document.getElementById('export');
 
 toggleWater.addEventListener('change', ()=>{ gWater.visible = toggleWater.checked; });
 toggleRain.addEventListener('change', ()=>{ rain.visible = toggleRain.checked; });
-toggleLabels.addEventListener('change', ()=>{ gLabels.visible = toggleLabels.checked; });
 
 toggleAuto.addEventListener('change', ()=>{ controls.autoRotate = toggleAuto.checked; });
 speed.addEventListener('input', ()=>{ controls.autoRotateSpeed = parseFloat(speed.value); speedVal.textContent = speed.value; });
@@ -342,7 +318,6 @@ function animate(){
   rain.geometry.attributes.position.needsUpdate = true;
 
   renderer.render(scene, camera);
-  labelRenderer.render(scene, camera);
 }
 animate();
 
@@ -359,14 +334,11 @@ function showTip(html,x,y){
   tip.style.transform = `translate(${tx}px,${ty}px)`;
 }
 function hideTip(){ tip.classList.remove('visible'); tip.style.transform='translate(-9999px,-9999px)'; }
-window.showTip = showTip; // expõe para testes
+window.showTip = showTip; // para testes
 
 function pick(e){
-  const mouse = new THREE.Vector2(
-    (e.clientX / innerWidth) * 2 - 1,
-    -(e.clientY / innerHeight) * 2 + 1
-  );
-  const raycaster = new THREE.Raycaster();
+  mouse.x = (e.clientX / innerWidth) * 2 - 1;
+  mouse.y = -(e.clientY / innerHeight) * 2 + 1;
   raycaster.setFromCamera(mouse, camera);
   const hit = raycaster.intersectObjects(selectable, true)[0];
   if(!hit){ hideTip(); if(highlighted){ highlighted.material?.emissive?.setHex(0x000000); highlighted=null; } return; }
@@ -383,7 +355,7 @@ window.addEventListener('pointerdown', (e)=>{ pick(e); clearTimeout(tipTimer); t
 // Responsivo
 addEventListener('resize', ()=>{
   camera.aspect = innerWidth/innerHeight; camera.updateProjectionMatrix();
-  renderer.setSize(innerWidth, innerHeight); labelRenderer.setSize(innerWidth, innerHeight);
+  renderer.setSize(innerWidth, innerHeight);
 });
 
 // ======= TESTES AUTOMÁTICOS (Smoke Tests) =======
@@ -410,7 +382,7 @@ function runTests(){
     controls.autoRotate=false;
     out.push(typeof renderer.domElement.toDataURL==='function' ? ok('Exportação PNG disponível') : bad('Exportação PNG indisponível'));
     const before = camera.position.clone(); nudgeCamera(THREE.MathUtils.degToRad(5), 0); const moved = before.distanceTo(camera.position) > 1e-6; out.push(moved ? ok('Giro manual altera câmera') : bad('Giro manual não alterou câmera'));
-    // Novos testes: tooltip
+    // Testes do tooltip
     out.push(document.getElementById('tooltip') ? ok('Tooltip presente') : bad('Tooltip ausente'));
     out.push(typeof window.showTip==='function' ? ok('Função de tooltip disponível') : bad('Função de tooltip indisponível'));
   }catch(e){ out.push(bad('Exceção nos testes: '+e.message)); }

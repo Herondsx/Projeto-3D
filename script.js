@@ -155,8 +155,13 @@ for(let i=-20;i<=20;i++){
 
 const washer = new THREE.Mesh(new THREE.BoxGeometry(0.7,0.6,0.5), new THREE.MeshStandardMaterial({color:0x1565c0, metalness:.2, roughness:.7}));
 washer.position.set(-5.2, 0.31, -3.2); washer.userData = {name:'Lavadora pressão', desc:'Canto traseiro esquerdo.'}; gWash.add(washer);
+
+// >>> LINHA CORRIGIDA (sem espaço indevido)
 const hoseCoil = new THREE.Mesh(new THREE.TorusGeometry(0.25, 0.06, 16, 64), new THREE.MeshStandardMaterial({color:0x111111, metalness:.3, roughness:.6}));
-hoseCoil.rotation.x = Math.PI/2; hoseCoil.position.set(-5.2, 0.55, -3.2); gWash.add(hoseCoil);
+hoseCoil.rotation.x = Math.PI/2; 
+hoseCoil.position.set(-5.2, 0.55, -3.2); 
+gWash.add(hoseCoil);
+
 const wand = new THREE.Mesh(new THREE.CylinderGeometry(0.015,0.015,1.1,16), new THREE.MeshStandardMaterial({color:0x212121}));
 wand.rotation.z = Math.PI/5; wand.position.set(-4.5, 0.6, -2.7); gWash.add(wand);
 

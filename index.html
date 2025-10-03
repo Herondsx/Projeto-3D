@@ -5,8 +5,20 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>Oficina – Captação de Água de Chuva (3D)</title>
 
-  <!-- Estilos -->
-  <link rel="stylesheet" href="./style.css" />
+  <!-- CSS separado -->
+  <link rel="stylesheet" href="style.css" />
+
+  <!-- Polyfill para Import Maps em qualquer navegador (iPad incluso) -->
+  <script async src="https://unpkg.com/es-module-shims@1.10.0/dist/es-module-shims.js"></script>
+
+  <!-- Import map: resolve o specifier 'three' usado pelos módulos JSM -->
+  <script type="importmap-shim">
+  {
+    "imports": {
+      "three": "https://unpkg.com/three@0.160.0/build/three.module.js"
+    }
+  }
+  </script>
 </head>
 <body>
   <canvas id="scene"></canvas>
@@ -26,6 +38,7 @@
     <h3>Controles</h3>
     <div class="row"><label><input id="toggleWater" type="checkbox" checked> Mostrar fluxo de água</label></div>
     <div class="row"><label><input id="toggleRain" type="checkbox" checked> Simular chuva</label></div>
+    <div class="row"><label><input id="toggleLabels" type="checkbox"> Mostrar rótulos</label></div>
 
     <div class="row"><label><input id="toggleAuto" type="checkbox"> Girar câmera automaticamente</label></div>
     <div class="row"><label>Velocidade rotação</label>
@@ -43,7 +56,7 @@
       </div>
       <button class="btn" id="export" aria-label="Exportar imagem em PNG">📸 Exportar imagem (PNG)</button>
     </div>
-    <div class="hint">Toque/arraste para orbitar/zoom. Toque nos objetos para destacá-los. Passe o mouse (ou toque) para ver o nome/descrição. O botão acima salva um PNG do enquadramento atual.</div>
+    <div class="hint">Toque/arraste para orbitar/zoom. Toque nos objetos para destacá-los. Passe o mouse (ou toque) para ver o nome/descrição de cada elemento. O botão acima salva um PNG do enquadramento atual.</div>
 
     <details style="margin-top:10px;">
       <summary style="cursor:pointer; color:#cdd3e0; font-size:12px">Onde fica cada elemento</summary>
@@ -70,7 +83,7 @@
 
   <div class="footer">Projeto acadêmico – Ecologia & Sustentabilidade • Reuso de água da chuva para lavagem de veículos</div>
 
-  <!-- Script principal (módulo) -->
-  <script type="module" src="./script.js"></script>
+  <!-- Script principal em módulos ECMAScript -->
+  <script type="module-shim" src="script.js"></script>
 </body>
 </html>

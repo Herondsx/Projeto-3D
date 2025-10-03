@@ -72,14 +72,7 @@ body{
   background:rgba(0,0,0,.35); padding:6px 10px; border-radius:10px
 }
 
-/* CSS para labels 2D do ThreeJS */
-.lbl{
-  font-size:11px; padding:4px 6px; border-radius:8px;
-  background:#1a1f2b; color:#fff; border:1px solid rgba(255,255,255,.12);
-  box-shadow:0 4px 18px rgba(0,0,0,.35)
-}
-
-/* Tooltip/inspector flutuante */
+/* Tooltip (hover/toque) */
 #tooltip{
   position:fixed; left:0; top:0; transform:translate(-9999px,-9999px);
   background:#1a1f2b; color:#fff; font-size:12px; padding:6px 8px;
@@ -89,7 +82,7 @@ body{
 }
 #tooltip.visible{opacity:1}
 
-/* iPad/touch: aumentar alvos e espaçamentos */
+/* iPad/touch */
 @media (pointer:coarse) {
   .topbar{inset:12px auto auto 12px}
   .panel{right:12px; top:12px; width:380px}

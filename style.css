@@ -1,0 +1,99 @@
+:root{
+  --roof:#ff7a00;          /* laranja – telhado */
+  --gutter:#9e9e9e;        /* cinza – calhas/canos */
+  --water:#2196f3;         /* azul – água */
+  --pillar:#222;           /* pilares */
+  --bg:#0f1115;            /* fundo */
+  --panel:#171a21;
+  --panel-2:#1f2330;
+  --text:#eef1f7;
+  --muted:#a0a6b5;
+  --ok:#18d57b;            /* verde de testes */
+  --bad:#ff5364;           /* vermelho de testes */
+  --lane:#ffd54f;          /* demarcação */
+}
+html,body{height:100%;}
+body{
+  margin:0; background:var(--bg); color:var(--text);
+  font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Inter,Arial,sans-serif;
+  overflow:hidden;
+}
+#scene{position:fixed; inset:0;}
+
+/* HUD */
+.topbar{
+  position:fixed; inset:16px auto auto 16px;
+  background:linear-gradient(180deg,var(--panel),var(--panel-2));
+  border:1px solid #2a2f3a; padding:12px 14px; border-radius:14px;
+  pointer-events:auto; box-shadow:0 10px 30px rgba(0,0,0,.35);
+}
+.title{font-weight:700; font-size:14px; letter-spacing:.2px;}
+.subtitle{font-size:12px; color:var(--muted); margin-top:4px; max-width:520px}
+.legend{display:flex; gap:12px; margin-top:10px; flex-wrap:wrap}
+.swatch{display:flex; align-items:center; gap:8px; font-size:12px; color:#d8dbe6}
+.dot{width:14px; height:14px; border-radius:4px; outline:1px solid rgba(255,255,255,.12)}
+.dot.roof{background:var(--roof)}
+.dot.gutter{background:var(--gutter)}
+.dot.water{background:var(--water)}
+.dot.pillar{background:var(--pillar)}
+
+.panel{
+  position:fixed; right:16px; top:16px; width:370px;
+  background:linear-gradient(180deg,var(--panel),var(--panel-2));
+  border:1px solid #2a2f3a; border-radius:14px; padding:12px;
+  pointer-events:auto; box-shadow:0 10px 30px rgba(0,0,0,.35)
+}
+.panel h3{margin:4px 0 8px; font-size:13px}
+.row{display:flex; align-items:center; justify-content:space-between; gap:8px; margin:8px 0}
+.row label{font-size:12px; color:#cdd3e0}
+.hint{font-size:11px; color:var(--muted); margin-top:8px}
+
+.camgrid{display:grid; grid-template-columns:repeat(3,48px); gap:8px}
+.camgrid button{
+  height:40px; border-radius:10px; background:#283049; border:1px solid #2f364b;
+  color:#eaeefc; font-size:16px; cursor:pointer
+}
+.camgrid button:active{transform:translateY(1px)}
+.btn{padding:10px 12px; border-radius:10px; background:#0e61ff; border:none; color:#fff; cursor:pointer; font-size:14px}
+
+.tester{
+  position:fixed; left:16px; bottom:16px;
+  background:linear-gradient(180deg,var(--panel),var(--panel-2));
+  border:1px solid #2a2f3a; border-radius:12px; padding:10px 12px; max-width:520px;
+  box-shadow:0 10px 30px rgba(0,0,0,.35)
+}
+.tester h4{margin:0 0 6px; font-size:12px; color:#cdd3e0}
+.tests{font-size:11px; line-height:1.5}
+.tests .ok{color:var(--ok)}
+.tests .bad{color:var(--bad)}
+
+.footer{
+  position:fixed; right:16px; bottom:16px; font-size:11px; color:var(--muted);
+  background:rgba(0,0,0,.35); padding:6px 10px; border-radius:10px
+}
+
+/* CSS para labels 2D do ThreeJS */
+.lbl{
+  font-size:11px; padding:4px 6px; border-radius:8px;
+  background:#1a1f2b; color:#fff; border:1px solid rgba(255,255,255,.12);
+  box-shadow:0 4px 18px rgba(0,0,0,.35)
+}
+
+/* Tooltip/inspector flutuante */
+#tooltip{
+  position:fixed; left:0; top:0; transform:translate(-9999px,-9999px);
+  background:#1a1f2b; color:#fff; font-size:12px; padding:6px 8px;
+  border:1px solid rgba(255,255,255,.12); border-radius:8px;
+  box-shadow:0 8px 24px rgba(0,0,0,.45); pointer-events:none; opacity:0;
+  transition:opacity .15s ease
+}
+#tooltip.visible{opacity:1}
+
+/* iPad/touch: aumentar alvos e espaçamentos */
+@media (pointer:coarse) {
+  .topbar{inset:12px auto auto 12px}
+  .panel{right:12px; top:12px; width:380px}
+  .camgrid{grid-template-columns:repeat(3,56px); gap:10px}
+  .camgrid button{height:48px; font-size:18px}
+  .btn{padding:12px 14px; font-size:16px}
+}

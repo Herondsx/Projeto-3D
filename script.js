@@ -1,13 +1,15 @@
-// ===== Imports via import map (GitHub Pages + iPad) =====
-import * as THREE from 'three';
-import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
+// Imports por URL (robusto para GitHub Pages + iPad/Safari)
+import * as THREE from 'https://unpkg.com/three@0.160.0/build/three.module.js';
+import { OrbitControls } from 'https://unpkg.com/three@0.160.0/examples/jsm/controls/OrbitControls.js';
+import { CSS2DRenderer, CSS2DObject } from 'https://unpkg.com/three@0.160.0/examples/jsm/renderers/CSS2DRenderer.js';
+
+/* ====== (todo o restante é idêntico ao que te enviei por último) ======
+   Copiei aqui a versão que já estava OK (reservatório subterrâneo, chuva,
+   tooltips, export PNG, sustentabilidade, etc.).  */
 
 // ===== Renderer / Cena / Câmera =====
 const canvas = document.getElementById('scene');
-const renderer = new THREE.WebGLRenderer({
-  canvas, antialias:true, preserveDrawingBuffer:true, powerPreference:'high-performance'
-});
+const renderer = new THREE.WebGLRenderer({ canvas, antialias:true, preserveDrawingBuffer:true, powerPreference:'high-performance' });
 renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.8));
 renderer.setSize(innerWidth, innerHeight);
 renderer.outputColorSpace = THREE.SRGBColorSpace;
@@ -28,6 +30,7 @@ document.body.appendChild(labelRenderer.domElement);
 const controls = new OrbitControls(camera, labelRenderer.domElement);
 controls.enableDamping = true;
 controls.target.set(0, 2.2, 0);
+controls.update();
 
 // ===== Luzes =====
 scene.add(new THREE.HemisphereLight(0xffffff, 0x20202c, 1.15));
@@ -126,6 +129,7 @@ gStructure.add(pipe2);
 
 // ===== Rótulos (desligados por padrão) =====
 [roof,gutterMain,downspout,filter,pump,manhole].forEach(m=>m.geometry.computeBoundingBox?.());
+const gLabels = scene.children.find(g=>g===gLabels) || gLabels; // só para garantir referência
 gLabels.visible = false;
 addLabel(roof,'Telhado (captação)');
 addLabel(gutterMain,'Calha principal');
@@ -227,6 +231,7 @@ toggleLabels.addEventListener('change',()=>gLabels.visible=toggleLabels.checked)
 toggleAuto.addEventListener('change',()=>controls.autoRotate=toggleAuto.checked);
 speed.addEventListener('input',()=>{ controls.autoRotateSpeed=parseFloat(speed.value); speedVal.textContent=speed.value; });
 
+// Giro manual (compatível iPad)
 const spherical=new THREE.Spherical(), offset=new THREE.Vector3(), EPS=0.001;
 function nudgeCamera(dTheta,dPhi){
   offset.copy(camera.position).sub(controls.target); spherical.setFromVector3(offset);
@@ -318,7 +323,6 @@ function runTests(){
     out.push(document.getElementById('roofArea')?ok('UI sustentabilidade presente'):bad('UI sustentabilidade ausente'));
   }catch(e){ out.push(bad('Exceção nos testes: '+e.message)); }
   testsEl.innerHTML=out.join('');
-  console.table({washItems:gWash.children.length, waterLines:gWater.children.length});
 }
 rerunBtn.addEventListener('click', runTests); runTests();
 

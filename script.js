@@ -1,11 +1,9 @@
-// ==================================================
-// Imports ESM por CDN (compatível com GitHub Pages/iPad)
-import * as THREE from 'https://esm.sh/three@0.160.0';
-import { OrbitControls } from 'https://esm.sh/three@0.160.0/examples/jsm/controls/OrbitControls.js';
-import { CSS2DRenderer, CSS2DObject } from 'https://esm.sh/three@0.160.0/examples/jsm/renderers/CSS2DRenderer.js';
+// ===== Imports via import map (GitHub Pages + iPad) =====
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
 
-// ==================================================
-// Renderer / Cena / Câmera
+// ===== Renderer / Cena / Câmera =====
 const canvas = document.getElementById('scene');
 const renderer = new THREE.WebGLRenderer({
   canvas, antialias:true, preserveDrawingBuffer:true, powerPreference:'high-performance'
@@ -31,33 +29,29 @@ const controls = new OrbitControls(camera, labelRenderer.domElement);
 controls.enableDamping = true;
 controls.target.set(0, 2.2, 0);
 
-// ==================================================
-// Luzes
+// ===== Luzes =====
 scene.add(new THREE.HemisphereLight(0xffffff, 0x20202c, 1.15));
 const dir = new THREE.DirectionalLight(0xffffff, .9);
-dir.position.set(10,12,6);
-scene.add(dir);
+dir.position.set(10, 12, 6); scene.add(dir);
 
-// ==================================================
-// Medidas (m)
+// ===== Medidas =====
 const L=12, W=8, H=3.2;
 
-// Piso e grid
+// ===== Piso/grid =====
 scene.add(new THREE.GridHelper(40, 40, 0x3a3f4d, 0x2a2f3a));
 const ground = new THREE.Mesh(
-  new THREE.PlaneGeometry(20,16),
+  new THREE.PlaneGeometry(20, 16),
   new THREE.MeshStandardMaterial({color:0x161a22, roughness:.95})
 );
 ground.rotation.x = -Math.PI/2; scene.add(ground);
 
-// Grupos
+// ===== Grupos =====
 const gStructure = new THREE.Group(), gWater = new THREE.Group(),
-      gLabels = new THREE.Group(),    gWash  = new THREE.Group();
+      gLabels    = new THREE.Group(), gWash  = new THREE.Group();
 scene.add(gStructure, gWater, gLabels, gWash);
 
-// ==================================================
-// Pilares (6)
-const pillarMat = new THREE.MeshStandardMaterial({color:new THREE.Color(getVar('--pillar'))});
+// ===== Pilares (6) =====
+const pillarMat = new THREE.MeshStandardMaterial({color:new THREE.Color(css('--pillar'))});
 const pillarGeom = new THREE.CylinderGeometry(0.10,0.10,H,24);
 for(const x of [-L/2,0,L/2]) for(const z of [-W/2,W/2]){
   const p = new THREE.Mesh(pillarGeom, pillarMat);
@@ -66,17 +60,17 @@ for(const x of [-L/2,0,L/2]) for(const z of [-W/2,W/2]){
   gStructure.add(p);
 }
 
-// Telhado
-const roof = meshBox(L+0.5, 0.15, W+0.5, getVar('--roof'), {clearcoat:.6, roughness:.6, metalness:.2});
+// ===== Telhado =====
+const roof = box(L+0.5,0.15,W+0.5, css('--roof'), {clearcoat:.6, roughness:.6, metalness:.2});
 roof.position.set(0,H+0.1,0);
 roof.userData = {name:'Telhado', desc:'Superfície coletora da chuva (laranja).'};
 gStructure.add(roof);
 
-// Calhas e tubos
-const gutterMat = new THREE.MeshStandardMaterial({color:new THREE.Color(getVar('--gutter')), metalness:.6, roughness:.3});
+// ===== Calhas & tubulação =====
+const gutterMat = new THREE.MeshStandardMaterial({color:new THREE.Color(css('--gutter')), metalness:.6, roughness:.3});
 const gutterMain = new THREE.Mesh(new THREE.BoxGeometry(0.15,0.12,W+0.5), gutterMat);
-gutterMain.position.set(L/2+0.35, H+0.02, 0);
-gutterMain.userData = {name:'Calha principal', desc:'Beiral direito do telhado (longitudinal).'};
+gutterMain.position.set(L/2+0.35,H+0.02,0);
+gutterMain.userData = {name:'Calha principal', desc:'Beiral direito (longitudinal).'};
 gStructure.add(gutterMain);
 
 const gutterFront = new THREE.Mesh(new THREE.BoxGeometry(4,0.12,0.15), gutterMat);
@@ -85,34 +79,33 @@ gutterFront.userData = {name:'Calha frontal', desc:'Borda frontal, conduz à des
 gStructure.add(gutterFront);
 
 const downspout = new THREE.Mesh(new THREE.CylinderGeometry(0.08,0.08,H+0.2,24), gutterMat);
-downspout.position.set(L/2+0.35, (H+0.2)/2, W/2+0.35);
-downspout.userData = {name:'Condutor vertical', desc:'Canto dianteiro direito, do telhado ao chão.'};
+downspout.position.set(L/2+0.35,(H+0.2)/2, W/2+0.35);
+downspout.userData = {name:'Condutor vertical', desc:'Canto dianteiro direito.'};
 gStructure.add(downspout);
 
 const pipe1 = new THREE.Mesh(new THREE.CylinderGeometry(0.07,0.07,2.2,24), gutterMat);
-pipe1.rotation.z = Math.PI/2;
-pipe1.position.set(L/2+0.35-1.1, 0.1, W/2+0.35);
-pipe1.userData = {name:'Tubo até filtro', desc:'Tubulação no piso levando à caixa de filtro.'};
+pipe1.rotation.z = Math.PI/2; pipe1.position.set(L/2+0.35-1.1, 0.1, W/2+0.35);
+pipe1.userData = {name:'Tubo até filtro', desc:'Tubulação no piso para caixa de filtro.'};
 gStructure.add(pipe1);
 
 // Filtro e bomba
-const filter = meshBox(0.8,0.6,0.6,0xffd54f,{roughness:.7});
-filter.position.set(L/2-1.7, 0.35, W/2+0.35);
+const filter = box(0.8,0.6,0.6,0xffd54f,{roughness:.7});
+filter.position.set(L/2-1.7,0.35,W/2+0.35);
 filter.userData = {name:'Filtro (areia/carvão)', desc:'Tratamento inicial da água pluvial.'};
 gStructure.add(filter);
 
-const pump = meshBox(0.6,0.45,0.45,0xd32f2f,{roughness:.5, metalness:.4});
-pump.position.set(L/2-2.7, 0.28, W/2+0.35);
+const pump = box(0.6,0.45,0.45,0xd32f2f,{roughness:.5,metalness:.4});
+pump.position.set(L/2-2.7,0.28,W/2+0.35);
 pump.userData = {name:'Bomba', desc:'Após o filtro, envia água ao reservatório.'};
 gStructure.add(pump);
 
-// Reservatório subterrâneo + tampão
+// ===== Reservatório subterrâneo + tampão =====
 const tank = new THREE.Mesh(
   new THREE.CylinderGeometry(1.1,1.1,1.6,36),
   new THREE.MeshStandardMaterial({color:0x1976d2, metalness:.1, roughness:.7, transparent:true, opacity:.85})
 );
-tank.position.set(L/2-4.4, -0.8, W/2+0.35); // topo rente ao piso (y=0)
-tank.userData = {name:'Reservatório subterrâneo (~2.000 L)', desc:'Enterrado, com tampão de acesso.'};
+tank.position.set(L/2-4.4, -0.8, W/2+0.35);
+tank.userData = {name:'Reservatório subterrâneo (~2.000 L)', desc:'Enterrado com tampão no piso.'};
 gStructure.add(tank);
 
 const manhole = new THREE.Mesh(
@@ -123,22 +116,17 @@ manhole.position.set(tank.position.x, 0.03, tank.position.z);
 manhole.userData = {name:'Tampão de acesso', desc:'Inspeção do reservatório.'};
 gStructure.add(manhole);
 
-// Tubo da bomba até o reservatório (desce ao subsolo)
+// Tubulação até o subsolo
 const pipe2 = new THREE.Group();
-const p2a = cyl(0.06,1.0); p2a.rotation.z=Math.PI/2; p2a.position.set(L/2-3.2, 0.32, W/2+0.35);
-const p2b = cyl(0.06,0.5); p2b.position.set(L/2-3.7,-0.25, W/2+0.35);
-pipe2.add(p2a,p2b); pipe2.userData = {name:'Tubo para reservatório', desc:'Liga bomba ao reservatório subterrâneo.'};
+pipe2.add(cyl(0.06,1.0).setRotationFromAxisAngle(new THREE.Vector3(0,0,1), Math.PI/2));
+pipe2.children[0].position.set(L/2-3.2,0.32,W/2+0.35);
+const p2b=cyl(0.06,0.5); p2b.position.set(L/2-3.7,-0.25,W/2+0.35); pipe2.add(p2b);
+pipe2.userData = {name:'Tubo para reservatório', desc:'Liga bomba ao reservatório subterrâneo.'};
 gStructure.add(pipe2);
 
-// ==================================================
-// Rótulos (opcionais; desligados por padrão)
-[roof, gutterMain, downspout, filter, pump, manhole].forEach(m=>m.geometry.computeBoundingBox?.());
+// ===== Rótulos (desligados por padrão) =====
+[roof,gutterMain,downspout,filter,pump,manhole].forEach(m=>m.geometry.computeBoundingBox?.());
 gLabels.visible = false;
-function addLabel(mesh, text){
-  const el = document.createElement('div'); el.className='lbl'; el.textContent=text;
-  const l = new CSS2DObject(el); l.position.set(0,(mesh.geometry.boundingBox?.max.y||0)+0.2,0);
-  mesh.updateWorldMatrix(true,true); mesh.add(l); gLabels.add(l);
-}
 addLabel(roof,'Telhado (captação)');
 addLabel(gutterMain,'Calha principal');
 addLabel(downspout,'Condutor vertical');
@@ -146,87 +134,77 @@ addLabel(filter,'Filtro');
 addLabel(pump,'Bomba');
 addLabel(manhole,'Reservatório subterrâneo');
 
-// ==================================================
-// Fluxo d'água (linhas tracejadas)
-const waterColor = new THREE.Color(getVar('--water'));
-function dashedPath(points){
-  const geo = new THREE.BufferGeometry().setFromPoints(points);
-  const mat = new THREE.LineDashedMaterial({color:waterColor, dashSize:.35, gapSize:.18});
-  const line = new THREE.Line(geo, mat); line.computeLineDistances();
-  gWater.add(line); return line;
+// ===== Fluxo de água (linhas tracejadas) =====
+const waterColor = new THREE.Color(css('--water'));
+function dashed(points){
+  const geo=new THREE.BufferGeometry().setFromPoints(points);
+  const mat=new THREE.LineDashedMaterial({color:waterColor,dashSize:.35,gapSize:.18});
+  const line=new THREE.Line(geo,mat); line.computeLineDistances(); gWater.add(line); return line;
 }
-function roofFlowLines(n=7){
-  const y = H + 0.18;
+(function roofFlow(n=7){
+  const y=H+0.18;
   for(let i=0;i<n;i++){
-    const z = -W/2 + (i+0.5)*(W/n);
-    dashedPath([ new THREE.Vector3(-L/2+0.3,y,z), new THREE.Vector3(L/2+0.25,y-0.08,z) ]);
+    const z=-W/2+(i+0.5)*(W/n);
+    dashed([new THREE.Vector3(-L/2+0.3,y,z), new THREE.Vector3(L/2+0.25,y-0.08,z)]);
   }
-}
-roofFlowLines();
-dashedPath([ new THREE.Vector3(L/2+0.35,H+0.05,-W/2+0.2), new THREE.Vector3(L/2+0.35,H+0.02,W/2+0.28) ]);
-dashedPath([ new THREE.Vector3(L/2-1.9,H,W/2+0.35), new THREE.Vector3(L/2+0.35,H,W/2+0.35) ]);
-dashedPath([ new THREE.Vector3(L/2+0.35,H,W/2+0.35), new THREE.Vector3(L/2+0.35,0.12,W/2+0.35) ]);
-dashedPath([ new THREE.Vector3(L/2+0.35,0.12,W/2+0.35), new THREE.Vector3(L/2-1.7+0.4,0.12,W/2+0.35) ]);
-dashedPath([ new THREE.Vector3(L/2-1.7-0.4,0.12,W/2+0.35), new THREE.Vector3(L/2-2.7,0.12,W/2+0.35) ]);
-dashedPath([ new THREE.Vector3(L/2-2.7-0.45,0.12,W/2+0.35), new THREE.Vector3(L/2-3.7,-0.4,W/2+0.35) ]);
-dashedPath([ new THREE.Vector3(L/2-3.7,-0.4,W/2+0.35), new THREE.Vector3(L/2-4.4,-0.4,W/2+0.35) ]);
+})();
+dashed([new THREE.Vector3(L/2+0.35,H+0.05,-W/2+0.2), new THREE.Vector3(L/2+0.35,H+0.02,W/2+0.28)]);
+dashed([new THREE.Vector3(L/2-1.9,H,W/2+0.35), new THREE.Vector3(L/2+0.35,H,W/2+0.35)]);
+dashed([new THREE.Vector3(L/2+0.35,H,W/2+0.35), new THREE.Vector3(L/2+0.35,0.12,W/2+0.35)]);
+dashed([new THREE.Vector3(L/2+0.35,0.12,W/2+0.35), new THREE.Vector3(L/2-1.7+0.4,0.12,W/2+0.35)]);
+dashed([new THREE.Vector3(L/2-1.7-0.4,0.12,W/2+0.35), new THREE.Vector3(L/2-2.7,0.12,W/2+0.35)]);
+dashed([new THREE.Vector3(L/2-2.7-0.45,0.12,W/2+0.35), new THREE.Vector3(L/2-3.7,-0.4,W/2+0.35)]);
+dashed([new THREE.Vector3(L/2-3.7,-0.4,W/2+0.35), new THREE.Vector3(L/2-4.4,-0.4,W/2+0.35)]);
 
-// ==================================================
-// Elementos do lava-rápido
-addLane(-3,-2,0.08,6); addLane(-3,2,0.08,6); addLane(3,-2,0.08,6); addLane(3,2,0.08,6);
+// ===== Elementos do lava-rápido =====
+lane(-3,-2); lane(-3,2); lane(3,-2); lane(3,2);
+const drain=box(L-2,0.05,0.35,0x757575,{metalness:.2,roughness:.6}); drain.position.set(0,0.026,0); gWash.add(drain);
+for(let i=-18;i<=18;i+=2){ const bar=box(0.02,0.06,0.34,0x9e9e9e,{metalness:.35,roughness:.35}); bar.position.set(i*0.45,0.03,0); drain.add(bar); }
 
-const drain = meshBox(L-2,0.05,0.35,0x757575,{metalness:.2,roughness:.6});
-drain.position.set(0,0.026,0); gWash.add(drain);
-for(let i=-18;i<=18;i+=2){ const bar=meshBox(0.02,0.06,0.34,0x9e9e9e,{metalness:.35,roughness:.35}); bar.position.set(i*0.45,0.03,0); drain.add(bar); }
-
-const washer = meshBox(0.7,0.6,0.5,0x1565c0,{metalness:.2,roughness:.7});
-washer.position.set(-5.2,0.31,-3.2); washer.userData={name:'Lavadora pressão',desc:'Canto traseiro esquerdo.'}; gWash.add(washer);
-
-const hoseCoil = new THREE.Mesh(new THREE.TorusGeometry(0.25,0.06,12,48), new THREE.MeshStandardMaterial({color:0x111111,metalness:.3,roughness:.6}));
+const washer=box(0.7,0.6,0.5,0x1565c0,{metalness:.2,roughness:.7}); washer.position.set(-5.2,0.31,-3.2);
+washer.userData={name:'Lavadora pressão',desc:'Canto traseiro esquerdo.'}; gWash.add(washer);
+const hoseCoil=new THREE.Mesh(new THREE.TorusGeometry(0.25,0.06,12,48), new THREE.MeshStandardMaterial({color:0x111111,metalness:.3,roughness:.6}));
 hoseCoil.rotation.x=Math.PI/2; hoseCoil.position.set(-5.2,0.55,-3.2); gWash.add(hoseCoil);
-const wand = cyl(0.015,1.1,16,0x212121); wand.rotation.z=Math.PI/5; wand.position.set(-4.5,0.6,-2.7); gWash.add(wand);
+const wand=cyl(0.015,1.1,16,0x212121); wand.rotation.z=Math.PI/5; wand.position.set(-4.5,0.6,-2.7); gWash.add(wand);
 
-const car = new THREE.Group();
-const body = meshBox(2.8,0.7,1.4,0x616161,{roughness:.8}); body.position.y=0.45; car.add(body);
-const roofCar = meshBox(1.6,0.5,1.2,0x757575,{roughness:.8}); roofCar.position.set(0,0.95,0); car.add(roofCar);
-const wheelGeom = new THREE.CylinderGeometry(0.35,0.35,0.3,20);
-for(const [x,z] of [[-1.2,-0.6],[1.2,-0.6],[-1.2,0.6],[1.2,0.6]]){ const w=new THREE.Mesh(wheelGeom,new THREE.MeshStandardMaterial({color:0x111111})); w.rotation.z=Math.PI/2; w.position.set(x,0.35,z); car.add(w); }
+const car=new THREE.Group();
+const body=box(2.8,0.7,1.4,0x616161,{roughness:.8}); body.position.y=0.45; car.add(body);
+const roofCar=box(1.6,0.5,1.2,0x757575,{roughness:.8}); roofCar.position.set(0,0.95,0); car.add(roofCar);
+const wheelGeom=new THREE.CylinderGeometry(0.35,0.35,0.3,20);
+for(const [x,z] of [[-1.2,-0.6],[1.2,-0.6],[-1.2,0.6],[1.2,0.6]]){
+  const w=new THREE.Mesh(wheelGeom,new THREE.MeshStandardMaterial({color:0x111111})); w.rotation.z=Math.PI/2; w.position.set(x,0.35,z); car.add(w);
+}
 car.position.set(3,0,0.5); gWash.add(car);
 
-const arch = new THREE.Mesh(new THREE.TorusGeometry(1.4,0.05,12,48,Math.PI), new THREE.MeshStandardMaterial({color:0xcfd8dc, metalness:.1, roughness:.8}));
+const arch=new THREE.Mesh(new THREE.TorusGeometry(1.4,0.05,12,48,Math.PI), new THREE.MeshStandardMaterial({color:0xcfd8dc,metalness:.1,roughness:.8}));
 arch.rotation.z=Math.PI; arch.rotation.y=Math.PI/2; arch.position.set(-3,1.4,0); gWash.add(arch);
 
-// ==================================================
-// Chuva (partículas)
-const rain = (()=>{ const COUNT=600, pos=new Float32Array(COUNT*3);
-  for(let i=0;i<COUNT;i++){ pos[i*3+0]=THREE.MathUtils.randFloatSpread(L+2); pos[i*3+1]=H+5+Math.random()*3; pos[i*3+2]=THREE.MathUtils.randFloatSpread(W+2); }
-  const geo=new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.BufferAttribute(pos,3));
-  const mat=new THREE.PointsMaterial({color:waterColor,size:0.06,transparent:true,opacity:.9});
-  const pts=new THREE.Points(geo,mat); pts.userData={COUNT}; return pts; })();
-scene.add(rain);
+// ===== Chuva =====
+const COUNT=600, rainPos=new Float32Array(COUNT*3);
+for(let i=0;i<COUNT;i++){ rainPos[i*3+0]=THREE.MathUtils.randFloatSpread(L+2); rainPos[i*3+1]=H+5+Math.random()*3; rainPos[i*3+2]=THREE.MathUtils.randFloatSpread(W+2); }
+const rainGeo=new THREE.BufferGeometry(); rainGeo.setAttribute('position', new THREE.BufferAttribute(rainPos,3));
+const rainMat=new THREE.PointsMaterial({color:waterColor,size:0.06,transparent:true,opacity:.9});
+const rain=new THREE.Points(rainGeo,rainMat); scene.add(rain);
 
-// ==================================================
-// Tooltip (hover/tap) + seleção
-const selectable = [roof,gutterMain,gutterFront,downspout,pipe1,filter,pump,manhole,car,arch,washer,
-  ...gStructure.children.filter(m=>m.geometry?.type==='CylinderGeometry' && Math.abs((m.geometry.parameters?.height||0)-H)<1e-6)];
-const raycaster = new THREE.Raycaster(); const mouse = new THREE.Vector2(); let highlighted=null;
-const tip = document.createElement('div'); tip.id='tooltip'; tip.setAttribute('role','status'); tip.setAttribute('aria-live','polite'); document.body.appendChild(tip);
+// ===== Tooltip / seleção =====
+const selectable=[roof,gutterMain,gutterFront,downspout,pipe1,filter,pump,manhole,car,arch,washer,
+  ...gStructure.children.filter(m=>m.geometry?.type==='CylinderGeometry'&&Math.abs((m.geometry.parameters?.height||0)-H)<1e-6)];
+const raycaster=new THREE.Raycaster(); const mouse=new THREE.Vector2(); let highlighted=null;
+const tip=document.createElement('div'); tip.id='tooltip'; tip.setAttribute('role','status'); tip.setAttribute('aria-live','polite'); document.body.appendChild(tip);
 let tipTimer=null;
-
 function showTip(html,x,y){
   tip.innerHTML=html; tip.classList.add('visible');
-  const pad=14, w=tip.offsetWidth, h=tip.offsetHeight;
-  const tx=Math.min(Math.max(x+12,pad), innerWidth - w - pad);
-  const ty=Math.min(Math.max(y+12,pad), innerHeight - h - pad);
+  const pad=14,w=tip.offsetWidth,h=tip.offsetHeight;
+  const tx=Math.min(Math.max(x+12,pad),innerWidth-w-pad), ty=Math.min(Math.max(y+12,pad),innerHeight-h-pad);
   tip.style.transform=`translate(${tx}px,${ty}px)`;
 }
 function hideTip(){ tip.classList.remove('visible'); tip.style.transform='translate(-9999px,-9999px)'; }
-window.showTip = showTip; // usado nos testes
+window.showTip=showTip;
 
 function pick(e){
-  mouse.x = (e.clientX/innerWidth)*2-1; mouse.y = -(e.clientY/innerHeight)*2+1;
+  mouse.x=(e.clientX/innerWidth)*2-1; mouse.y=-(e.clientY/innerHeight)*2+1;
   raycaster.setFromCamera(mouse,camera);
-  const hit = raycaster.intersectObjects(selectable,true)[0];
+  const hit=raycaster.intersectObjects(selectable,true)[0];
   if(!hit){ hideTip(); if(highlighted){ highlighted.material?.emissive?.setHex(0x000000); highlighted=null; } return; }
   const m=hit.object, name=m.userData?.name||'Elemento', desc=m.userData?.desc?`<div style='opacity:.85; margin-top:2px'>${m.userData.desc}</div>`:'';
   showTip(`<b>${name}</b>${desc}`, e.clientX, e.clientY);
@@ -236,51 +214,43 @@ function pick(e){
 addEventListener('pointermove', pick, {passive:true});
 addEventListener('pointerdown', e=>{ pick(e); clearTimeout(tipTimer); tipTimer=setTimeout(hideTip,2200); }, {passive:true});
 
-// ==================================================
-// Controles / Export / Responsivo
-const $ = id => document.getElementById(id);
+// ===== Controles / Export =====
+const $=id=>document.getElementById(id);
 const toggleWater=$('toggleWater'), toggleRain=$('toggleRain'), toggleLabels=$('toggleLabels'),
       toggleAuto=$('toggleAuto'), speed=$('speed'), speedVal=$('speedVal'),
       camUp=$('camUp'), camDown=$('camDown'), camLeft=$('camLeft'), camRight=$('camRight'), camReset=$('camReset'),
       exportBtn=$('export');
 
-toggleWater.addEventListener('change', ()=> gWater.visible = toggleWater.checked);
-toggleRain .addEventListener('change', ()=> rain.visible   = toggleRain.checked);
-toggleLabels.addEventListener('change', ()=> gLabels.visible= toggleLabels.checked);
-
-toggleAuto.addEventListener('change', ()=> controls.autoRotate = toggleAuto.checked);
-speed.addEventListener('input', ()=>{ controls.autoRotateSpeed = parseFloat(speed.value); speedVal.textContent = speed.value; });
+toggleWater.addEventListener('change',()=>gWater.visible=toggleWater.checked);
+toggleRain .addEventListener('change',()=>rain.visible=toggleRain.checked);
+toggleLabels.addEventListener('change',()=>gLabels.visible=toggleLabels.checked);
+toggleAuto.addEventListener('change',()=>controls.autoRotate=toggleAuto.checked);
+speed.addEventListener('input',()=>{ controls.autoRotateSpeed=parseFloat(speed.value); speedVal.textContent=speed.value; });
 
 const spherical=new THREE.Spherical(), offset=new THREE.Vector3(), EPS=0.001;
 function nudgeCamera(dTheta,dPhi){
   offset.copy(camera.position).sub(controls.target); spherical.setFromVector3(offset);
-  spherical.theta += dTheta; spherical.phi += dPhi;
-  spherical.phi = Math.max(EPS, Math.min(Math.PI - EPS, spherical.phi));
+  spherical.theta+=dTheta; spherical.phi+=dPhi;
+  spherical.phi=Math.max(EPS,Math.min(Math.PI-EPS,spherical.phi));
   offset.setFromSpherical(spherical); camera.position.copy(controls.target).add(offset); camera.lookAt(controls.target); controls.update();
 }
-const STEP = THREE.MathUtils.degToRad(10);
-camLeft.addEventListener('click', ()=> nudgeCamera( STEP,0));
-camRight.addEventListener('click',()=> nudgeCamera(-STEP,0));
-camUp.addEventListener('click',   ()=> nudgeCamera(0,-STEP));
-camDown.addEventListener('click', ()=> nudgeCamera(0, STEP));
+const STEP=THREE.MathUtils.degToRad(10);
+camLeft.addEventListener('click',()=>nudgeCamera( STEP,0));
+camRight.addEventListener('click',()=>nudgeCamera(-STEP,0));
+camUp.addEventListener('click',()=>nudgeCamera(0,-STEP));
+camDown.addEventListener('click',()=>nudgeCamera(0, STEP));
 camReset.addEventListener('click',()=>{ camera.position.set(14,10,14); controls.target.set(0,2.2,0); controls.update(); });
 
-exportBtn.addEventListener('click', ()=>{
-  const url = renderer.domElement.toDataURL('image/png');
-  const a = document.createElement('a'); a.href=url; a.download='maquete-oficina.png'; a.click();
+exportBtn.addEventListener('click',()=>{
+  const url=renderer.domElement.toDataURL('image/png');
+  const a=document.createElement('a'); a.href=url; a.download='maquete-oficina.png'; a.click();
 });
 
-addEventListener('resize', ()=>{
-  camera.aspect = innerWidth/innerHeight; camera.updateProjectionMatrix();
-  renderer.setSize(innerWidth, innerHeight); labelRenderer.setSize(innerWidth, innerHeight);
-}, {passive:true});
-
-// ==================================================
-// Calculadora de sustentabilidade (Santo André)
+// ===== Sustentabilidade =====
 const roofArea=$('roofArea'), runoff=$('runoff'), lossPct=$('lossPct'), rainAnnual=$('rainAnnual'),
       litersPerWash=$('litersPerWash'), washesPerDay=$('washesPerDay'),
       capYear=$('capYear'), capDay=$('capDay'), demDay=$('demDay'), coverage=$('coverage');
-[roofArea,runoff,lossPct,rainAnnual,litersPerWash,washesPerDay].forEach(el=>el.addEventListener('input', updateSustain, {passive:true}));
+[roofArea,runoff,lossPct,rainAnnual,litersPerWash,washesPerDay].forEach(el=>el.addEventListener('input',updateSustain,{passive:true}));
 updateSustain();
 
 function updateSustain(){
@@ -288,27 +258,26 @@ function updateSustain(){
   const C=clamp(+runoff.value||0.8,0.1,0.98);
   const Loss=clamp(+lossPct.value||10,0,50)/100;
   const Rmm=clamp(+rainAnnual.value||1880,200,4000);
-  const Vyear_L = A * (Rmm/1000) * C * (1-Loss) * 1000; // m³->L
-  const Vday_L = Vyear_L/365;
-  const demand_L = clamp(+litersPerWash.value||80,10,1000) * clamp(+washesPerDay.value||20,1,1000);
+  const Vyear_L=A*(Rmm/1000)*C*(1-Loss)*1000;
+  const Vday_L=Vyear_L/365;
+  const demand_L=clamp(+litersPerWash.value||80,10,1000)*clamp(+washesPerDay.value||20,1,1000);
 
-  capYear.textContent = fmtL(Vyear_L);
-  capDay .textContent = fmtL(Vday_L);
-  demDay .textContent = fmtL(demand_L);
+  capYear.textContent = fmt(Vyear_L);
+  capDay .textContent = fmt(Vday_L);
+  demDay .textContent = fmt(demand_L);
   coverage.textContent = (demand_L? Math.min(100,(Vday_L/demand_L)*100):0).toFixed(0)+'%';
 }
 
-// ==================================================
-// Loop
+// ===== Loop =====
 let t=0; const clock=new THREE.Clock();
 function animate(){
   requestAnimationFrame(animate);
   const dt=clock.getDelta(); t+=dt;
   controls.update();
 
-  gWater.traverse(o=>{ if(o.material?.isLineDashedMaterial){ o.material.dashOffset = -t*1.2; o.material.needsUpdate = true; } });
+  gWater.traverse(o=>{ if(o.material?.isLineDashedMaterial){ o.material.dashOffset=-t*1.2; o.material.needsUpdate=true; } });
 
-  const arr = rain.geometry.attributes.position.array, COUNT = rain.userData.COUNT;
+  const arr=rain.geometry.attributes.position.array;
   for(let i=0;i<COUNT;i++){
     arr[i*3+1]-=6*dt;
     if(arr[i*3+1]<H+0.25){
@@ -324,10 +293,8 @@ function animate(){
 }
 animate();
 
-// ==================================================
-// Testes (mantidos + extras)
+// ===== Testes =====
 const testsEl=document.getElementById('tests'); const rerunBtn=document.getElementById('rerun');
-rerunBtn.addEventListener('click', runTests);
 function ok(m){return `<div class="ok">✔ ${m}</div>`} function bad(m){return `<div class="bad">✘ ${m}</div>`}
 function runTests(){
   const out=[];
@@ -350,27 +317,17 @@ function runTests(){
     out.push((tank.position.y<0)?ok('Reservatório subterrâneo'):bad('Reservatório não subterrâneo'));
     out.push(document.getElementById('roofArea')?ok('UI sustentabilidade presente'):bad('UI sustentabilidade ausente'));
   }catch(e){ out.push(bad('Exceção nos testes: '+e.message)); }
-  testsEl.innerHTML = out.join('');
+  testsEl.innerHTML=out.join('');
   console.table({washItems:gWash.children.length, waterLines:gWater.children.length});
 }
-runTests();
+rerunBtn.addEventListener('click', runTests); runTests();
 
-// ==================================================
-// Utilitários
-function getVar(name){ return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
-function meshBox(x,y,z,color,opts={}){ return new THREE.Mesh(new THREE.BoxGeometry(x,y,z), new THREE.MeshStandardMaterial({color, ...opts})); }
-function cyl(r,h,seg=24,color=null){
-  return new THREE.Mesh(new THREE.CylinderGeometry(r,r,h,seg),
-    new THREE.MeshStandardMaterial({color: color ?? new THREE.Color(getVar('--gutter')), metalness:.6, roughness:.3}));
-}
-function addLane(x,z,w,l){
-  const m=meshBox(w,0.02,l,0xffd54f,{emissive:0x3a2a00,roughness:.6}); m.position.set(x,0.011,z); gWash.add(m); return m;
-}
-function fmtL(v){ return (isFinite(v)? new Intl.NumberFormat('pt-BR',{maximumFractionDigits:0}).format(v)+' L' : '—'); }
-function clamp(v,min,max){ return Math.min(max, Math.max(min, v)); }
-function nudgeCamera(dTheta,dPhi){ // reusado nos testes
-  const spherical=new THREE.Spherical(); const offset=new THREE.Vector3(); const EPS=0.001;
-  offset.copy(camera.position).sub(controls.target); spherical.setFromVector3(offset);
-  spherical.theta += dTheta; spherical.phi += dPhi; spherical.phi=Math.max(EPS,Math.min(Math.PI-EPS,spherical.phi));
-  offset.setFromSpherical(spherical); camera.position.copy(controls.target).add(offset); camera.lookAt(controls.target); controls.update();
-}
+// ===== Helpers =====
+function css(v){return getComputedStyle(document.documentElement).getPropertyValue(v).trim();}
+function box(x,y,z,color,opts={}){return new THREE.Mesh(new THREE.BoxGeometry(x,y,z), new THREE.MeshStandardMaterial({color, ...opts}));}
+function cyl(r,h,seg=24,color=null){return new THREE.Mesh(new THREE.CylinderGeometry(r,r,h,seg), new THREE.MeshStandardMaterial({color: color ?? new THREE.Color(css('--gutter')), metalness:.6, roughness:.3}));}
+function addLabel(mesh,text){const el=document.createElement('div'); el.className='lbl'; el.textContent=text; const l=new CSS2DObject(el); l.position.set(0,(mesh.geometry.boundingBox?.max.y||0)+0.2,0); mesh.updateWorldMatrix(true,true); mesh.add(l); gLabels.add(l);}
+function lane(x,z){const m=box(0.08,0.02,6,0xffd54f,{emissive:0x3a2a00,roughness:.6}); m.position.set(x,0.011,z); gWash.add(m); return m;}
+function fmt(v){return (isFinite(v)? new Intl.NumberFormat('pt-BR',{maximumFractionDigits:0}).format(v)+' L' : '—');}
+function clamp(v,min,max){return Math.min(max, Math.max(min, v));}
+function nudgeCamera(dTheta,dPhi){const s=new THREE.Spherical(), off=new THREE.Vector3(), EPS=0.001; off.copy(camera.position).sub(controls.target); s.setFromVector3(off); s.theta+=dTheta; s.phi+=dPhi; s.phi=Math.max(EPS,Math.min(Math.PI-EPS,s.phi)); off.setFromSpherical(s); camera.position.copy(controls.target).add(off); camera.lookAt(controls.target); controls.update();}

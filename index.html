@@ -3,29 +3,17 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes">
   <title>Oficina – Captação de Água de Chuva (3D)</title>
-
-  <!-- CSS separado -->
   <link rel="stylesheet" href="style.css" />
-
-  <!-- Polyfill para Import Maps em qualquer navegador (iPad incluso) -->
-  <script async src="https://unpkg.com/es-module-shims@1.10.0/dist/es-module-shims.js"></script>
-
-  <!-- Import map: resolve o specifier 'three' usado pelos módulos JSM -->
-  <script type="importmap-shim">
-  {
-    "imports": {
-      "three": "https://unpkg.com/three@0.160.0/build/three.module.js"
-    }
-  }
-  </script>
 </head>
 <body>
-  <canvas id="scene"></canvas>
+  <canvas id="scene" aria-label="Maquete 3D da oficina com captação de água de chuva"></canvas>
 
-  <div class="topbar">
-    <div class="title">Captação de Água de Chuva – Oficina de Martelinho/Lava Rápido</div>
-    <div class="subtitle">Maquete 3D interativa: telhado (laranja), calhas/canos (cinza), fluxo d’água (azul), 6 pilares (preto) e elementos típicos de lava-rápido.</div>
+  <!-- HUD superior -->
+  <div class="topbar" role="region" aria-label="Legenda do projeto">
+    <div class="title">Captação de Água de Chuva – Oficina de Martelinho / Lava Rápido</div>
+    <div class="subtitle">Telhado <b style="color:#ff7a00">laranja</b>, calhas/canos <b style="color:#9e9e9e">cinza</b>, fluxo d’água <b style="color:#2196f3">azul</b> e 6 pilares.</div>
     <div class="legend">
       <div class="swatch"><span class="dot roof"></span>Telhado</div>
       <div class="swatch"><span class="dot gutter"></span>Calhas & Canos</div>
@@ -34,7 +22,8 @@
     </div>
   </div>
 
-  <div class="panel">
+  <!-- Painel de controles (enxuto) -->
+  <div class="panel" role="region" aria-label="Controles">
     <h3>Controles</h3>
     <div class="row"><label><input id="toggleWater" type="checkbox" checked> Mostrar fluxo de água</label></div>
     <div class="row"><label><input id="toggleRain" type="checkbox" checked> Simular chuva</label></div>
@@ -43,47 +32,87 @@
     <div class="row"><label><input id="toggleAuto" type="checkbox"> Girar câmera automaticamente</label></div>
     <div class="row"><label>Velocidade rotação</label>
       <input id="speed" type="range" min="0.1" max="6" step="0.1" value="1.2">
-      <span id="speedVal" style="width:36px;text-align:right;font-size:12px;">1.2</span>
+      <span id="speedVal" class="mono small">1.2</span>
     </div>
-    <div class="row" style="align-items:flex-start; gap:12px">
+
+    <div class="row two">
       <div>
-        <div style="font-size:12px; color:#cdd3e0; margin-bottom:6px">Girar manualmente</div>
+        <div class="small muted">Girar manualmente</div>
         <div class="camgrid">
           <span></span><button id="camUp" aria-label="Girar para cima">▲</button><span></span>
-          <button id="camLeft" aria-label="Girar para a esquerda">◀</button><button id="camReset" aria-label="Resetar câmera">●</button><button id="camRight" aria-label="Girar para a direita">▶</button>
+          <button id="camLeft" aria-label="Girar para a esquerda">◀</button>
+          <button id="camReset" aria-label="Resetar câmera">●</button>
+          <button id="camRight" aria-label="Girar para a direita">▶</button>
           <span></span><button id="camDown" aria-label="Girar para baixo">▼</button><span></span>
         </div>
       </div>
       <button class="btn" id="export" aria-label="Exportar imagem em PNG">📸 Exportar imagem (PNG)</button>
     </div>
-    <div class="hint">Toque/arraste para orbitar/zoom. Toque nos objetos para destacá-los. Passe o mouse (ou toque) para ver o nome/descrição de cada elemento. O botão acima salva um PNG do enquadramento atual.</div>
 
-    <details style="margin-top:10px;">
-      <summary style="cursor:pointer; color:#cdd3e0; font-size:12px">Onde fica cada elemento</summary>
-      <ul style="margin:8px 0 0 18px; font-size:12px; color:#d7dcee; line-height:1.4">
+    <details class="blk">
+      <summary>Onde fica cada elemento</summary>
+      <ul class="list">
         <li><b>Calha principal</b>: no <i>beiral direito</i> do telhado (lado longitudinal).</li>
-        <li><b>Calha frontal</b>: na <i>borda da frente</i>, conduzindo à descida.</li>
+        <li><b>Calha frontal</b>: na <i>borda da frente</i>, conduz à descida.</li>
         <li><b>Condutor vertical</b>: <i>canto dianteiro direito</i>, do telhado ao chão.</li>
         <li><b>Filtro</b>: no chão, próximo à frente direita, logo após a tubulação horizontal.</li>
         <li><b>Bomba</b>: ao lado do filtro, empurra a água tratada.</li>
-        <li><b>Reservatório</b>: mais ao <i>centro-direita</i> da frente, depois da bomba.</li>
-        <li><b>Ralo linear</b>: canaleta no <i>centro do piso</i>, para escoar respingos.</li>
+        <li><b>Reservatório</b>: <i>subterrâneo</i>, com tampão no piso à frente direita.</li>
+        <li><b>Ralo linear</b>: canaleta no <i>centro do piso</i>, para respingos.</li>
         <li><b>Lavadora + mangueira</b>: canto <i>traseiro esquerdo</i>.</li>
         <li><b>Arco de espuma</b>: box esquerdo.</li>
-        <li><b>Faixas amarelas + cones</b>: demarcam os dois boxes de lavagem.</li>
+        <li><b>Faixas amarelas + cones</b>: demarcam os dois boxes.</li>
       </ul>
     </details>
   </div>
 
-  <div class="tester" id="tester">
+  <!-- Painel Sustentabilidade (simples e didático) -->
+  <div class="panel sustain" role="region" aria-label="Sustentabilidade e estimativas">
+    <h3>Estimativa de captação (Santo André, SP)</h3>
+    <div class="grid2">
+      <label>Área do telhado (m²)
+        <input id="roofArea" type="number" min="10" step="1" value="96">
+      </label>
+      <label>Coef. escoamento (0–1)
+        <input id="runoff" type="number" min="0.1" max="0.95" step="0.05" value="0.85">
+      </label>
+      <label>Perdas “first flush” (%)
+        <input id="lossPct" type="number" min="0" max="30" step="1" value="10">
+      </label>
+      <label>Chuva anual (mm)
+        <select id="rainAnnual">
+          <option value="1500">Conservador ~1500</option>
+          <option value="1880" selected>Médio ~1880</option>
+          <option value="2118">Úmido ~2118</option>
+        </select>
+      </label>
+      <label>Litros por lavagem
+        <input id="litersPerWash" type="number" min="20" step="10" value="80">
+      </label>
+      <label>Lavagens/dia
+        <input id="washesPerDay" type="number" min="1" step="1" value="20">
+      </label>
+    </div>
+
+    <div class="metrics">
+      <div><span class="muted small">Captação estimada/ano</span><div id="capYear" class="strong">—</div></div>
+      <div><span class="muted small">Captação média/dia</span><div id="capDay" class="strong">—</div></div>
+      <div><span class="muted small">Demanda/dia</span><div id="demDay" class="strong">—</div></div>
+      <div><span class="muted small">Cobertura da demanda</span><div id="coverage" class="strong">—</div></div>
+    </div>
+    <div class="hint">Ajuste os valores para o seu cenário. Cálculo: <span class="mono">Volume = Área × (Chuva/1000) × Coef. × (1 − Perdas)</span>.</div>
+  </div>
+
+  <!-- Testes (mantidos + novos) -->
+  <div class="tester" id="tester" role="region" aria-label="Testes automáticos">
     <h4>Testes automáticos (smoke tests)</h4>
     <div class="tests" id="tests"></div>
     <button class="btn" id="rerun">Rodar novamente</button>
   </div>
 
-  <div class="footer">Projeto acadêmico – Ecologia & Sustentabilidade • Reuso de água da chuva para lavagem de veículos</div>
+  <div class="footer">Projeto acadêmico – Ecologia & Sustentabilidade • Reuso de água de chuva</div>
 
-  <!-- Script principal em módulos ECMAScript -->
-  <script type="module-shim" src="script.js"></script>
+  <!-- Código principal (ESM) -->
+  <script type="module" src="script.js"></script>
 </body>
 </html>

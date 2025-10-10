@@ -14,7 +14,12 @@
 }
 html,body{height:100%;}
 body{ margin:0; background:var(--bg); color:var(--text); font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Inter,Arial,sans-serif; overflow:hidden; }
+.mono{font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace}
+.small{font-size:12px}
+.muted{color:var(--muted)}
+.strong{font-weight:700; font-size:14px}
 #scene{position:fixed; inset:0;}
+
 /* HUD */
 .topbar{position:fixed; inset:16px auto auto 16px; background:linear-gradient(180deg,var(--panel),var(--panel-2)); border:1px solid #2a2f3a; padding:12px 14px; border-radius:14px; pointer-events:auto; box-shadow:0 10px 30px rgba(0,0,0,.35);} 
 .title{font-weight:700; font-size:14px; letter-spacing:.2px;}
@@ -27,36 +32,53 @@ body{ margin:0; background:var(--bg); color:var(--text); font-family:system-ui,-
 .dot.water{background:var(--water)}
 .dot.pillar{background:var(--pillar)}
 
-.panel{position:fixed; right:16px; top:16px; width:370px; background:linear-gradient(180deg,var(--panel),var(--panel-2)); border:1px solid #2a2f3a; border-radius:14px; padding:12px; pointer-events:auto; box-shadow:0 10px 30px rgba(0,0,0,.35)}
+/* Painéis */
+.panel{position:fixed; right:16px; top:16px; width:360px; background:linear-gradient(180deg,var(--panel),var(--panel-2)); border:1px solid #2a2f3a; border-radius:14px; padding:12px; pointer-events:auto; box-shadow:0 10px 30px rgba(0,0,0,.35)}
 .panel h3{margin:4px 0 8px; font-size:13px}
 .row{display:flex; align-items:center; justify-content:space-between; gap:8px; margin:8px 0}
+.row.two{align-items:flex-start; gap:12px}
 .row label{font-size:12px; color:#cdd3e0}
 .hint{font-size:11px; color:var(--muted); margin-top:8px}
-
 .camgrid{display:grid; grid-template-columns:repeat(3,48px); gap:8px}
 .camgrid button{height:40px; border-radius:10px; background:#283049; border:1px solid #2f364b; color:#eaeefc; font-size:16px; cursor:pointer}
 .camgrid button:active{transform:translateY(1px)}
 .btn{padding:10px 12px; border-radius:10px; background:#0e61ff; border:none; color:#fff; cursor:pointer; font-size:14px}
 
+/* Sustentabilidade */
+.panel.sustain{right:16px; top:auto; bottom:16px; width:360px}
+.grid2{display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:6px}
+.grid2 label{display:flex; flex-direction:column; font-size:12px; color:#cdd3e0; gap:4px}
+.grid2 input, .grid2 select{height:34px; border-radius:8px; border:1px solid #2f364b; background:#1b2133; color:#eaeefc; padding:0 8px}
+.metrics{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin:10px 0 4px}
+.metrics .strong{font-size:16px}
+
+/* Testes */
 .tester{position:fixed; left:16px; bottom:16px; background:linear-gradient(180deg,var(--panel),var(--panel-2)); border:1px solid #2a2f3a; border-radius:12px; padding:10px 12px; max-width:520px; box-shadow:0 10px 30px rgba(0,0,0,.35)}
 .tester h4{margin:0 0 6px; font-size:12px; color:#cdd3e0}
 .tests{font-size:11px; line-height:1.5}
 .tests .ok{color:var(--ok)}
 .tests .bad{color:var(--bad)}
 
+/* Footer */
 .footer{position:fixed; right:16px; bottom:16px; font-size:11px; color:var(--muted); background:rgba(0,0,0,.35); padding:6px 10px; border-radius:10px}
 
-/* CSS para labels 2D do ThreeJS */
+/* Labels 2D */
 .lbl{font-size:11px; padding:4px 6px; border-radius:8px; background:#1a1f2b; color:#fff; border:1px solid rgba(255,255,255,.12); box-shadow:0 4px 18px rgba(0,0,0,.35)}
 
-/* Tooltip/inspector flutuante */
+/* Tooltip */
 #tooltip{position:fixed; left:0; top:0; transform:translate(-9999px,-9999px); background:#1a1f2b; color:#fff; font-size:12px; padding:6px 8px; border:1px solid rgba(255,255,255,.12); border-radius:8px; box-shadow:0 8px 24px rgba(0,0,0,.45); pointer-events:none; opacity:0; transition:opacity .15s ease}
 #tooltip.visible{opacity:1}
 
-/* iPad/touch: aumentar alvos e espaçamentos */
+/* Listas */
+.blk{margin-top:10px}
+.blk summary{cursor:pointer; color:#cdd3e0; font-size:12px}
+.list{margin:8px 0 0 18px; font-size:12px; color:#d7dcee; line-height:1.4}
+
+/* iPad/touch */
 @media (pointer:coarse) {
   .topbar{inset:12px auto auto 12px}
-  .panel{right:12px; top:12px; width:380px}
+  .panel{right:12px; top:12px; width:384px}
+  .panel.sustain{right:12px; bottom:12px; width:384px}
   .camgrid{grid-template-columns:repeat(3,56px); gap:10px}
   .camgrid button{height:48px; font-size:18px}
   .btn{padding:12px 14px; font-size:16px}

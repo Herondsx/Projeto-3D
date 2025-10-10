@@ -3,30 +3,37 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes" />
   <title>Oficina – Captação de Água de Chuva (3D)</title>
 
+  <!-- CSS principal (tema completo) -->
   <link rel="stylesheet" href="style.css" />
 
-  <!-- Polyfill: Import Maps + module-shim (iPad/Safari e GitHub Pages) -->
-  <script async src="https://unpkg.com/es-module-shims@1.10.0/dist/es-module-shims.js"></script>
+  <!-- Fallback crítico: garante que a cena e fundo renderizem mesmo se o style.css não carregar -->
+  <style>
+    html,body{height:100%}
+    body{margin:0;background:#0f1115;color:#eef1f7;font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Inter,Arial,sans-serif;overflow:hidden}
+    #scene{position:fixed;inset:0} /* garante o canvas full-screen */
+    /* deixar os painéis minimamente legíveis sem o CSS externo */
+    .topbar,.panel,.tester,.footer{position:fixed;background:#171a21cc;color:#eef1f7;padding:8px;border-radius:10px}
+    .topbar{left:12px;top:12px}
+    .panel{right:12px;top:12px;max-width:380px}
+    .tester{left:12px;bottom:12px}
+    .footer{right:12px;bottom:12px;font-size:12px;opacity:.7}
+  </style>
 
-  <!-- Import map: resolve 'three' e 'three/addons/' -->
-  <script type="importmap-shim">
-  {
-    "imports": {
-      "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
-      "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
-    }
-  }
-  </script>
+  <!-- (Não precisa de import-map; os imports foram resolvidos por URL dentro do script.js) -->
+  <link rel="preconnect" href="https://unpkg.com" crossorigin>
 </head>
 <body>
-  <canvas id="scene" aria-label="Maquete 3D da oficina com captação de água de chuva"></canvas>
+  <canvas id="scene"></canvas>
 
   <div class="topbar" role="region" aria-label="Legenda do projeto">
     <div class="title">Captação de Água de Chuva – Oficina de Martelinho / Lava Rápido</div>
-    <div class="subtitle">Telhado <b style="color:#ff7a00">laranja</b>, calhas/canos <b style="color:#9e9e9e">cinza</b>, fluxo d’água <b style="color:#2196f3">azul</b> e 6 pilares.</div>
+    <div class="subtitle">
+      Telhado <b style="color:#ff7a00">laranja</b>, calhas/canos <b style="color:#9e9e9e">cinza</b>,
+      fluxo d’água <b style="color:#2196f3">azul</b> e 6 pilares.
+    </div>
     <div class="legend">
       <div class="swatch"><span class="dot roof"></span>Telhado</div>
       <div class="swatch"><span class="dot gutter"></span>Calhas & Canos</div>
@@ -44,11 +51,11 @@
     <div class="row"><label><input id="toggleAuto" type="checkbox"> Girar câmera automaticamente</label></div>
     <div class="row"><label>Velocidade rotação</label>
       <input id="speed" type="range" min="0.1" max="6" step="0.1" value="1.2">
-      <span id="speedVal" class="mono small">1.2</span>
+      <span id="speedVal" style="width:36px;text-align:right;font-size:12px;">1.2</span>
     </div>
-    <div class="row two">
+    <div class="row" style="align-items:flex-start; gap:12px">
       <div>
-        <div class="small muted">Girar manualmente</div>
+        <div style="font-size:12px; color:#cdd3e0; margin-bottom:6px">Girar manualmente</div>
         <div class="camgrid">
           <span></span><button id="camUp" aria-label="Girar para cima">▲</button><span></span>
           <button id="camLeft" aria-label="Girar para a esquerda">◀</button>
@@ -81,15 +88,9 @@
   <div class="panel sustain" role="region" aria-label="Sustentabilidade e estimativas">
     <h3>Estimativa de captação (Santo André, SP)</h3>
     <div class="grid2">
-      <label>Área do telhado (m²)
-        <input id="roofArea" type="number" min="10" step="1" value="96">
-      </label>
-      <label>Coef. escoamento (0–1)
-        <input id="runoff" type="number" min="0.1" max="0.95" step="0.05" value="0.85">
-      </label>
-      <label>Perdas “first flush” (%)
-        <input id="lossPct" type="number" min="0" max="30" step="1" value="10">
-      </label>
+      <label>Área do telhado (m²)<input id="roofArea" type="number" min="10" step="1" value="96"></label>
+      <label>Coef. escoamento (0–1)<input id="runoff" type="number" min="0.1" max="0.95" step="0.05" value="0.85"></label>
+      <label>Perdas “first flush” (%)<input id="lossPct" type="number" min="0" max="30" step="1" value="10"></label>
       <label>Chuva anual (mm)
         <select id="rainAnnual">
           <option value="1500">Conservador ~1500</option>
@@ -97,14 +98,9 @@
           <option value="2118">Úmido ~2118</option>
         </select>
       </label>
-      <label>Litros por lavagem
-        <input id="litersPerWash" type="number" min="20" step="10" value="80">
-      </label>
-      <label>Lavagens/dia
-        <input id="washesPerDay" type="number" min="1" step="1" value="20">
-      </label>
+      <label>Litros por lavagem<input id="litersPerWash" type="number" min="20" step="10" value="80"></label>
+      <label>Lavagens/dia<input id="washesPerDay" type="number" min="1" step="1" value="20"></label>
     </div>
-
     <div class="metrics">
       <div><span class="muted small">Captação estimada/ano</span><div id="capYear" class="strong">—</div></div>
       <div><span class="muted small">Captação média/dia</span><div id="capDay" class="strong">—</div></div>
@@ -123,7 +119,7 @@
 
   <div class="footer">Projeto acadêmico – Ecologia & Sustentabilidade • Reuso de água de chuva</div>
 
-  <!-- Script principal usando module-shim (suporta import map no iPad) -->
-  <script type="module-shim" src="script.js"></script>
+  <!-- Script principal (módulo) -->
+  <script type="module" src="script.js"></script>
 </body>
 </html>

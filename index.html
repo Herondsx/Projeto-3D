@@ -6,34 +6,22 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <title>Oficina – Captação de Água de Chuva (3D)</title>
 
-  <!-- CSS principal (tema completo) -->
+  <!-- Tema principal -->
   <link rel="stylesheet" href="style.css" />
 
-  <!-- Fallback crítico: garante que a cena e fundo renderizem mesmo se o style.css não carregar -->
+  <!-- Fallback mínimo: garante tela cheia mesmo se o CSS não carregar -->
   <style>
-    html,body{height:100%}
-    body{margin:0;background:#0f1115;color:#eef1f7;font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Inter,Arial,sans-serif;overflow:hidden}
-    #scene{position:fixed;inset:0} /* garante o canvas full-screen */
-    /* deixar os painéis minimamente legíveis sem o CSS externo */
-    .topbar,.panel,.tester,.footer{position:fixed;background:#171a21cc;color:#eef1f7;padding:8px;border-radius:10px}
-    .topbar{left:12px;top:12px}
-    .panel{right:12px;top:12px;max-width:380px}
-    .tester{left:12px;bottom:12px}
-    .footer{right:12px;bottom:12px;font-size:12px;opacity:.7}
+    html,body{height:100%} body{margin:0;background:#0f1115;color:#eef1f7;overflow:hidden;font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Inter,Arial,sans-serif}
+    #scene{position:fixed;inset:0} .topbar,.panel,.tester,.footer{position:fixed;background:#171a21cc;color:#eef1f7;padding:8px;border-radius:10px}
+    .topbar{left:12px;top:12px} .panel{right:12px;top:12px;max-width:380px} .tester{left:12px;bottom:12px} .footer{right:12px;bottom:12px;font-size:12px;opacity:.7}
   </style>
-
-  <!-- (Não precisa de import-map; os imports foram resolvidos por URL dentro do script.js) -->
-  <link rel="preconnect" href="https://unpkg.com" crossorigin>
 </head>
 <body>
   <canvas id="scene"></canvas>
 
   <div class="topbar" role="region" aria-label="Legenda do projeto">
     <div class="title">Captação de Água de Chuva – Oficina de Martelinho / Lava Rápido</div>
-    <div class="subtitle">
-      Telhado <b style="color:#ff7a00">laranja</b>, calhas/canos <b style="color:#9e9e9e">cinza</b>,
-      fluxo d’água <b style="color:#2196f3">azul</b> e 6 pilares.
-    </div>
+    <div class="subtitle">Telhado <b style="color:#ff7a00">laranja</b>, calhas/canos <b style="color:#9e9e9e">cinza</b>, fluxo d’água <b style="color:#2196f3">azul</b> e 6 pilares.</div>
     <div class="legend">
       <div class="swatch"><span class="dot roof"></span>Telhado</div>
       <div class="swatch"><span class="dot gutter"></span>Calhas & Canos</div>
@@ -46,13 +34,14 @@
     <h3>Controles</h3>
     <div class="row"><label><input id="toggleWater" type="checkbox" checked> Mostrar fluxo de água</label></div>
     <div class="row"><label><input id="toggleRain" type="checkbox" checked> Simular chuva</label></div>
-    <div class="row"><label><input id="toggleLabels" type="checkbox"> Mostrar rótulos</label></div>
+    <div class="row"><label><input id="toggleTips" type="checkbox" checked> Mostrar rótulos ao passar o mouse</label></div>
 
     <div class="row"><label><input id="toggleAuto" type="checkbox"> Girar câmera automaticamente</label></div>
     <div class="row"><label>Velocidade rotação</label>
       <input id="speed" type="range" min="0.1" max="6" step="0.1" value="1.2">
       <span id="speedVal" style="width:36px;text-align:right;font-size:12px;">1.2</span>
     </div>
+
     <div class="row" style="align-items:flex-start; gap:12px">
       <div>
         <div style="font-size:12px; color:#cdd3e0; margin-bottom:6px">Girar manualmente</div>
@@ -84,7 +73,7 @@
     </details>
   </div>
 
-  <!-- Painel Sustentabilidade -->
+  <!-- Estimativa de sustentabilidade -->
   <div class="panel sustain" role="region" aria-label="Sustentabilidade e estimativas">
     <h3>Estimativa de captação (Santo André, SP)</h3>
     <div class="grid2">
@@ -110,7 +99,6 @@
     <div class="hint">Fórmula: <span class="mono">Volume = Área × (Chuva/1000) × Coef. × (1 − Perdas)</span>.</div>
   </div>
 
-  <!-- Testes -->
   <div class="tester" id="tester" role="region" aria-label="Testes automáticos">
     <h4>Testes automáticos (smoke tests)</h4>
     <div class="tests" id="tests"></div>
@@ -119,7 +107,7 @@
 
   <div class="footer">Projeto acadêmico – Ecologia & Sustentabilidade • Reuso de água de chuva</div>
 
-  <!-- Script principal (módulo) -->
+  <!-- Script: apenas Three.js (por URL) e código próprio. Nada de import maps. -->
   <script type="module" src="script.js"></script>
 </body>
 </html>

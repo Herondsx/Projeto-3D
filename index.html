@@ -5,12 +5,25 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="apple-mobile-web-app-capable" content="yes">
   <title>Oficina – Captação de Água de Chuva (3D)</title>
+
   <link rel="stylesheet" href="style.css" />
+
+  <!-- Polyfill: Import Maps + module-shim (iPad/Safari e GitHub Pages) -->
+  <script async src="https://unpkg.com/es-module-shims@1.10.0/dist/es-module-shims.js"></script>
+
+  <!-- Import map: resolve 'three' e 'three/addons/' -->
+  <script type="importmap-shim">
+  {
+    "imports": {
+      "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+      "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+    }
+  }
+  </script>
 </head>
 <body>
   <canvas id="scene" aria-label="Maquete 3D da oficina com captação de água de chuva"></canvas>
 
-  <!-- HUD superior -->
   <div class="topbar" role="region" aria-label="Legenda do projeto">
     <div class="title">Captação de Água de Chuva – Oficina de Martelinho / Lava Rápido</div>
     <div class="subtitle">Telhado <b style="color:#ff7a00">laranja</b>, calhas/canos <b style="color:#9e9e9e">cinza</b>, fluxo d’água <b style="color:#2196f3">azul</b> e 6 pilares.</div>
@@ -22,7 +35,6 @@
     </div>
   </div>
 
-  <!-- Painel de controles -->
   <div class="panel" role="region" aria-label="Controles">
     <h3>Controles</h3>
     <div class="row"><label><input id="toggleWater" type="checkbox" checked> Mostrar fluxo de água</label></div>
@@ -34,7 +46,6 @@
       <input id="speed" type="range" min="0.1" max="6" step="0.1" value="1.2">
       <span id="speedVal" class="mono small">1.2</span>
     </div>
-
     <div class="row two">
       <div>
         <div class="small muted">Girar manualmente</div>
@@ -52,16 +63,16 @@
     <details class="blk">
       <summary>Onde fica cada elemento</summary>
       <ul class="list">
-        <li><b>Calha principal</b>: no <i>beiral direito</i> do telhado (lado longitudinal).</li>
-        <li><b>Calha frontal</b>: na <i>borda da frente</i>, conduz à descida.</li>
-        <li><b>Condutor vertical</b>: <i>canto dianteiro direito</i>, do telhado ao chão.</li>
-        <li><b>Filtro</b>: no chão, próximo à frente direita, logo após a tubulação horizontal.</li>
-        <li><b>Bomba</b>: ao lado do filtro, empurra a água tratada.</li>
-        <li><b>Reservatório</b>: <i>subterrâneo</i>, com tampão no piso à frente direita.</li>
-        <li><b>Ralo linear</b>: canaleta no <i>centro do piso</i>, para respingos.</li>
-        <li><b>Lavadora + mangueira</b>: canto <i>traseiro esquerdo</i>.</li>
+        <li><b>Calha principal</b>: beiral direito (longitudinal).</li>
+        <li><b>Calha frontal</b>: borda da frente → descida.</li>
+        <li><b>Condutor vertical</b>: canto dianteiro direito.</li>
+        <li><b>Filtro</b>: piso frontal direito (após tubulação).</li>
+        <li><b>Bomba</b>: ao lado do filtro.</li>
+        <li><b>Reservatório</b>: <i>subterrâneo</i> com tampão no piso.</li>
+        <li><b>Ralo linear</b>: centro do piso.</li>
+        <li><b>Lavadora + mangueira</b>: canto traseiro esquerdo.</li>
         <li><b>Arco de espuma</b>: box esquerdo.</li>
-        <li><b>Faixas amarelas + cones</b>: demarcam os dois boxes.</li>
+        <li><b>Faixas + cones</b>: demarcação dos boxes.</li>
       </ul>
     </details>
   </div>
@@ -100,7 +111,7 @@
       <div><span class="muted small">Demanda/dia</span><div id="demDay" class="strong">—</div></div>
       <div><span class="muted small">Cobertura da demanda</span><div id="coverage" class="strong">—</div></div>
     </div>
-    <div class="hint">Ajuste os valores para o seu cenário. Cálculo: <span class="mono">Volume = Área × (Chuva/1000) × Coef. × (1 − Perdas)</span>.</div>
+    <div class="hint">Fórmula: <span class="mono">Volume = Área × (Chuva/1000) × Coef. × (1 − Perdas)</span>.</div>
   </div>
 
   <!-- Testes -->
@@ -112,7 +123,7 @@
 
   <div class="footer">Projeto acadêmico – Ecologia & Sustentabilidade • Reuso de água de chuva</div>
 
-  <!-- Código principal -->
-  <script type="module" src="script.js"></script>
+  <!-- Script principal usando module-shim (suporta import map no iPad) -->
+  <script type="module-shim" src="script.js"></script>
 </body>
 </html>

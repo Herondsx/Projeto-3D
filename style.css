@@ -1,516 +1,102 @@
-// =======================================
-// Imports (CDN ESM com dependências resolvidas)
-// => Compatível com GitHub Pages e iPad (sem import maps)
-import * as THREE from 'https://esm.sh/three@0.160.0';
-import { OrbitControls } from 'https://esm.sh/three@0.160.0/examples/jsm/controls/OrbitControls.js';
-import { CSS2DRenderer, CSS2DObject } from 'https://esm.sh/three@0.160.0/examples/jsm/renderers/CSS2DRenderer.js';
-
-// =======================================
-// Renderer / Cena / Câmera (otimizado pra tablet)
-const canvas = document.getElementById('scene');
-const renderer = new THREE.WebGLRenderer({
-  canvas,
-  antialias: true,
-  preserveDrawingBuffer: true,
-  powerPreference: 'high-performance'
-});
-renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.8));
-renderer.setSize(innerWidth, innerHeight);
-renderer.outputColorSpace = THREE.SRGBColorSpace;
-
-const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x0f1115);
-
-const camera = new THREE.PerspectiveCamera(55, innerWidth / innerHeight, 0.1, 220);
-camera.position.set(14, 10, 14);
-
-const labelRenderer = new CSS2DRenderer();
-labelRenderer.setSize(innerWidth, innerHeight);
-labelRenderer.domElement.style.position = 'fixed';
-labelRenderer.domElement.style.inset = '0';
-labelRenderer.domElement.style.pointerEvents = 'none';
-document.body.appendChild(labelRenderer.domElement);
-
-const controls = new OrbitControls(camera, labelRenderer.domElement);
-controls.enableDamping = true;
-controls.target.set(0, 2.2, 0);
-
-// =======================================
-// Luzes (simples e leves)
-const hemi = new THREE.HemisphereLight(0xffffff, 0x20202c, 1.15);
-hemi.position.set(0, 20, 0);
-scene.add(hemi);
-const dir = new THREE.DirectionalLight(0xffffff, 0.9);
-dir.position.set(10, 12, 6);
-dir.castShadow = false;
-scene.add(dir);
-
-// =======================================
-// Medidas aproximadas da cobertura (m)
-const L = 12; // comprimento (X)
-const W = 8;  // largura (Z)
-const H = 3.2;// altura dos pilares
-
-// Piso + grade
-const grid = new THREE.GridHelper(40, 40, 0x3a3f4d, 0x2a2f3a);
-grid.position.y = 0;
-scene.add(grid);
-
-const ground = new THREE.Mesh(
-  new THREE.PlaneGeometry(20, 16),
-  new THREE.MeshStandardMaterial({ color: 0x161a22, roughness: .95, metalness: 0 })
-);
-ground.rotation.x = -Math.PI / 2;
-scene.add(ground);
-
-// =======================================
-// Grupos
-const gStructure = new THREE.Group();
-const gWater = new THREE.Group();
-const gLabels = new THREE.Group();
-const gWash = new THREE.Group();
-scene.add(gStructure, gWater, gLabels, gWash);
-
-// =======================================
-// Pilares (6)
-const pillarMat = new THREE.MeshStandardMaterial({ color: new THREE.Color(getVar('--pillar')) });
-const pillarGeom = new THREE.CylinderGeometry(0.10, 0.10, H, 24);
-const pillarX = [-L / 2, 0, L / 2];
-const pillarZ = [-W / 2, W / 2];
-for (const x of pillarX) for (const z of pillarZ) {
-  const p = new THREE.Mesh(pillarGeom, pillarMat);
-  p.position.set(x, H / 2, z);
-  p.userData = { name: 'Pilar', desc: 'Estrutura de sustentação do telhado.' };
-  gStructure.add(p);
+:root{
+  --roof:#ff7a00;
+  --gutter:#9e9e9e;
+  --water:#2196f3;
+  --pillar:#222;
+  --bg:#0f1115;
+  --panel:#171a21;
+  --panel-2:#1f2330;
+  --text:#eef1f7;
+  --muted:#a0a6b5;
+  --ok:#18d57b;
+  --bad:#ff5364;
+  --lane:#ffd54f;
 }
-
-// Telhado
-const roof = meshBox(L + 0.5, 0.15, W + 0.5, getVar('--roof'), { clearcoat: .6, roughness: .6, metalness: .2 });
-roof.position.set(0, H + 0.1, 0);
-roof.userData = { name: 'Telhado', desc: 'Superfície coletora da chuva (laranja).' };
-gStructure.add(roof);
-
-// Calhas e tubulações
-const gutterMat = new THREE.MeshStandardMaterial({ color: new THREE.Color(getVar('--gutter')), metalness: .6, roughness: .3 });
-
-const gutterMain = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.12, W + 0.5), gutterMat);
-gutterMain.position.set(L / 2 + 0.35, H + 0.02, 0);
-gutterMain.userData = { name: 'Calha principal', desc: 'Beiral direito do telhado (lado longitudinal).' };
-gStructure.add(gutterMain);
-
-const gutterFront = new THREE.Mesh(new THREE.BoxGeometry(4, 0.12, 0.15), gutterMat);
-gutterFront.position.set(L / 2 - 1.0, H, W / 2 + 0.35);
-gutterFront.userData = { name: 'Calha frontal', desc: 'Borda frontal, conduz à descida.' };
-gStructure.add(gutterFront);
-
-const downspout = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, H + 0.2, 24), gutterMat);
-downspout.position.set(L / 2 + 0.35, (H + 0.2) / 2, W / 2 + 0.35);
-downspout.userData = { name: 'Condutor vertical', desc: 'Canto dianteiro direito, do telhado ao chão.' };
-gStructure.add(downspout);
-
-// Tubo horizontal até filtro
-const pipe1 = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 2.2, 24), gutterMat);
-pipe1.rotation.z = Math.PI / 2;
-pipe1.position.set(L / 2 + 0.35 - 1.1, 0.1, W / 2 + 0.35);
-pipe1.userData = { name: 'Tubo até filtro', desc: 'Tubulação no piso levando à caixa de filtro.' };
-gStructure.add(pipe1);
-
-// Filtro e bomba
-const filter = meshBox(0.8, 0.6, 0.6, 0xffd54f, { roughness: .7 });
-filter.position.set(L / 2 - 1.7, 0.35, W / 2 + 0.35);
-filter.userData = { name: 'Filtro (areia/carvão)', desc: 'Tratamento inicial da água pluvial.' };
-gStructure.add(filter);
-
-const pump = meshBox(0.6, 0.45, 0.45, 0xd32f2f, { roughness: .5, metalness: .4 });
-pump.position.set(L / 2 - 2.7, 0.28, W / 2 + 0.35);
-pump.userData = { name: 'Bomba', desc: 'Após o filtro, envia água ao reservatório.' };
-gStructure.add(pump);
-
-// ===== Reservatório SUBTERRÂNEO =====
-// Cilindro sob o solo (topo rente ao piso), com tampão e poço de visita
-const tank = new THREE.Mesh(new THREE.CylinderGeometry(1.1, 1.1, 1.6, 36),
-  new THREE.MeshStandardMaterial({ color: 0x1976d2, metalness: .1, roughness: .7, transparent: true, opacity: 0.85 }));
-tank.position.set(L / 2 - 4.4, -0.8, W / 2 + 0.35); // centro a -0.8 => topo em 0
-tank.userData = { name: 'Reservatório subterrâneo (~2.000 L)', desc: 'Enterrado, com tampão no piso.' };
-gStructure.add(tank);
-
-// Tampão / tampa no piso
-const manhole = new THREE.Mesh(
-  new THREE.CylinderGeometry(0.35, 0.35, 0.06, 32),
-  new THREE.MeshStandardMaterial({ color: 0x424242, metalness: .2, roughness: .6 })
-);
-manhole.position.set(tank.position.x, 0.03, tank.position.z);
-manhole.userData = { name: 'Tampão de acesso', desc: 'Acesso de inspeção ao reservatório subterrâneo.' };
-gStructure.add(manhole);
-
-// Tubo da bomba até reservatório (desce ao subsolo)
-const pipe2 = new THREE.Group();
-const p2a = cyl(0.06, 1.0); p2a.rotation.z = Math.PI / 2; p2a.position.set(L / 2 - 3.2, 0.32, W / 2 + 0.35);
-const p2b = cyl(0.06, 0.5); p2b.position.set(L / 2 - 3.7, -0.25, W / 2 + 0.35);
-pipe2.add(p2a, p2b);
-pipe2.userData = { name: 'Tubo para reservatório', desc: 'Fecha o circuito entre bomba e reservatório subterrâneo.' };
-gStructure.add(pipe2);
-
-// =======================================
-// Rótulos (opcionais – desligados por padrão)
-[roof, gutterMain, downspout, filter, pump, manhole].forEach(m => { m.geometry.computeBoundingBox?.(); });
-gLabels.visible = false;
-function addLabel(mesh, text) {
-  const el = document.createElement('div'); el.className = 'lbl'; el.textContent = text;
-  const l = new CSS2DObject(el); l.position.set(0, (mesh.geometry.boundingBox?.max.y || 0) + 0.2, 0);
-  mesh.updateWorldMatrix(true, true);
-  mesh.add(l); gLabels.add(l);
+html,body{height:100%;}
+body{
+  margin:0; background:var(--bg); color:var(--text);
+  font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Inter,Arial,sans-serif;
+  overflow:hidden;
 }
-addLabel(roof, 'Telhado (captação)');
-addLabel(gutterMain, 'Calha principal');
-addLabel(downspout, 'Condutor vertical');
-addLabel(filter, 'Filtro');
-addLabel(pump, 'Bomba');
-addLabel(manhole, 'Reservatório subterrâneo');
+.mono{font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace}
+.small{font-size:12px}
+.muted{color:var(--muted)}
+.strong{font-weight:700; font-size:14px}
+#scene{position:fixed; inset:0}
 
-// =======================================
-// Fluxo de água (linhas tracejadas animadas)
-const waterColor = new THREE.Color(getVar('--water'));
-function dashedPath(points) {
-  const geo = new THREE.BufferGeometry().setFromPoints(points);
-  const mat = new THREE.LineDashedMaterial({ color: waterColor, dashSize: .35, gapSize: .18, linewidth: 1 });
-  const line = new THREE.Line(geo, mat);
-  line.computeLineDistances();
-  gWater.add(line);
-  return line;
+/* HUD */
+.topbar{
+  position:fixed; inset:16px auto auto 16px;
+  background:linear-gradient(180deg,var(--panel),var(--panel-2));
+  border:1px solid #2a2f3a; padding:12px 14px; border-radius:14px;
+  pointer-events:auto; box-shadow:0 10px 30px rgba(0,0,0,.35)
 }
-function roofFlowLines(n = 7) {
-  const y = H + 0.18;
-  for (let i = 0; i < n; i++) {
-    const z = -W / 2 + (i + 0.5) * (W / n);
-    dashedPath([new THREE.Vector3(-L / 2 + 0.3, y, z), new THREE.Vector3(L / 2 + 0.25, y - 0.08, z)]);
-  }
+.title{font-weight:700; font-size:14px; letter-spacing:.2px}
+.subtitle{font-size:12px; color:var(--muted); margin-top:4px; max-width:520px}
+.legend{display:flex; gap:12px; margin-top:10px; flex-wrap:wrap}
+.swatch{display:flex; align-items:center; gap:8px; font-size:12px; color:#d8dbe6}
+.dot{width:14px; height:14px; border-radius:4px; outline:1px solid rgba(255,255,255,.12)}
+.dot.roof{background:var(--roof)} .dot.gutter{background:var(--gutter)}
+.dot.water{background:var(--water)} .dot.pillar{background:var(--pillar)}
+
+/* Painéis */
+.panel{
+  position:fixed; right:16px; top:16px; width:360px;
+  background:linear-gradient(180deg,var(--panel),var(--panel-2));
+  border:1px solid #2a2f3a; border-radius:14px; padding:12px;
+  pointer-events:auto; box-shadow:0 10px 30px rgba(0,0,0,.35)
 }
-roofFlowLines();
-// Calha longitudinal e frontal
-dashedPath([new THREE.Vector3(L / 2 + 0.35, H + 0.05, -W / 2 + 0.2), new THREE.Vector3(L / 2 + 0.35, H + 0.02, W / 2 + 0.28)]);
-dashedPath([new THREE.Vector3(L / 2 - 1.9, H, W / 2 + 0.35), new THREE.Vector3(L / 2 + 0.35, H, W / 2 + 0.35)]);
-// Descendo ao chão
-dashedPath([new THREE.Vector3(L / 2 + 0.35, H, W / 2 + 0.35), new THREE.Vector3(L / 2 + 0.35, 0.12, W / 2 + 0.35)]);
-// Até filtro e bomba
-dashedPath([new THREE.Vector3(L / 2 + 0.35, 0.12, W / 2 + 0.35), new THREE.Vector3(L / 2 - 1.7 + 0.4, 0.12, W / 2 + 0.35)]);
-dashedPath([new THREE.Vector3(L / 2 - 1.7 - 0.4, 0.12, W / 2 + 0.35), new THREE.Vector3(L / 2 - 2.7, 0.12, W / 2 + 0.35)]);
-// Da bomba, desce ao subsolo e segue até o reservatório
-dashedPath([new THREE.Vector3(L / 2 - 2.7 - 0.45, 0.12, W / 2 + 0.35), new THREE.Vector3(L / 2 - 3.7, -0.4, W / 2 + 0.35)]);
-dashedPath([new THREE.Vector3(L / 2 - 3.7, -0.4, W / 2 + 0.35), new THREE.Vector3(L / 2 - 4.4, -0.4, W / 2 + 0.35)]);
+.panel h3{margin:4px 0 8px; font-size:13px}
+.row{display:flex; align-items:center; justify-content:space-between; gap:8px; margin:8px 0}
+.row.two{align-items:flex-start; gap:12px}
+.row label{font-size:12px; color:#cdd3e0}
+.hint{font-size:11px; color:var(--muted); margin-top:8px}
+.camgrid{display:grid; grid-template-columns:repeat(3,48px); gap:8px}
+.camgrid button{height:40px; border-radius:10px; background:#283049; border:1px solid #2f364b; color:#eaeefc; font-size:16px; cursor:pointer}
+.camgrid button:active{transform:translateY(1px)}
+.btn{padding:10px 12px; border-radius:10px; background:#0e61ff; border:none; color:#fff; cursor:pointer; font-size:14px}
 
-// =======================================
-// Elementos de lava-rápido (mais visuais)
-addLane(-3, -2, 0.08, 6);
-addLane(-3,  2, 0.08, 6);
-addLane( 3, -2, 0.08, 6);
-addLane( 3,  2, 0.08, 6);
+/* Sustentabilidade */
+.panel.sustain{right:16px; top:auto; bottom:16px; width:360px}
+.grid2{display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:6px}
+.grid2 label{display:flex; flex-direction:column; font-size:12px; color:#cdd3e0; gap:4px}
+.grid2 input, .grid2 select{height:34px; border-radius:8px; border:1px solid #2f364b; background:#1b2133; color:#eaeefc; padding:0 8px}
+.metrics{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin:10px 0 4px}
+.metrics .strong{font-size:16px}
 
-const drain = meshBox(L - 2, 0.05, 0.35, 0x757575, { metalness: .2, roughness: .6 });
-drain.position.set(0, 0.026, 0); gWash.add(drain);
-
-// grelha (poucas barras para desempenho)
-for (let i = -18; i <= 18; i += 2) {
-  const bar = meshBox(0.02, 0.06, 0.34, 0x9e9e9e, { metalness: .35, roughness: .35 });
-  bar.position.set(i * 0.45, 0.03, 0); drain.add(bar);
+/* Testes */
+.tester{
+  position:fixed; left:16px; bottom:16px;
+  background:linear-gradient(180deg,var(--panel),var(--panel-2));
+  border:1px solid #2a2f3a; border-radius:12px; padding:10px 12px;
+  max-width:520px; box-shadow:0 10px 30px rgba(0,0,0,.35)
 }
+.tester h4{margin:0 0 6px; font-size:12px; color:#cdd3e0}
+.tests{font-size:11px; line-height:1.5}
+.tests .ok{color:var(--ok)}
+.tests .bad{color:var(--bad)}
 
-// Lavadora pressão + mangueira + lança
-const washer = meshBox(0.7, 0.6, 0.5, 0x1565c0, { metalness: .2, roughness: .7 });
-washer.position.set(-5.2, 0.31, -3.2);
-washer.userData = { name: 'Lavadora pressão', desc: 'Equipamento no canto traseiro esquerdo.' };
-gWash.add(washer);
+/* Footer */
+.footer{position:fixed; right:16px; bottom:16px; font-size:11px; color:var(--muted); background:rgba(0,0,0,.35); padding:6px 10px; border-radius:10px}
 
-const hoseCoil = new THREE.Mesh(new THREE.TorusGeometry(0.25, 0.06, 12, 48),
-  new THREE.MeshStandardMaterial({ color: 0x111111, metalness: .3, roughness: .6 }));
-hoseCoil.rotation.x = Math.PI / 2; hoseCoil.position.set(-5.2, 0.55, -3.2); gWash.add(hoseCoil);
-const wand = cyl(0.015, 1.1, 16, 0x212121); wand.rotation.z = Math.PI / 5; wand.position.set(-4.5, 0.6, -2.7); gWash.add(wand);
+/* Labels 2D */
+.lbl{font-size:11px; padding:4px 6px; border-radius:8px; background:#1a1f2b; color:#fff; border:1px solid rgba(255,255,255,.12); box-shadow:0 4px 18px rgba(0,0,0,.35)}
 
-// Carro low-poly
-const car = new THREE.Group();
-const carBody = meshBox(2.8, 0.7, 1.4, 0x616161, { roughness: .8 }); carBody.position.y = 0.45; car.add(carBody);
-const carRoof = meshBox(1.6, 0.5, 1.2, 0x757575, { roughness: .8 }); carRoof.position.set(0, 0.95, 0); car.add(carRoof);
-const wheelGeom = new THREE.CylinderGeometry(0.35, 0.35, 0.3, 20);
-function wheel(x, z) { const w = new THREE.Mesh(wheelGeom, new THREE.MeshStandardMaterial({ color: 0x111111 })); w.rotation.z = Math.PI / 2; w.position.set(x, 0.35, z); car.add(w); }
-wheel(-1.2, -0.6); wheel(1.2, -0.6); wheel(-1.2, 0.6); wheel(1.2, 0.6);
-car.position.set(3, 0, 0.5); gWash.add(car);
+/* Tooltip */
+#tooltip{position:fixed; left:0; top:0; transform:translate(-9999px,-9999px); background:#1a1f2b; color:#fff; font-size:12px; padding:6px 8px; border:1px solid rgba(255,255,255,.12); border-radius:8px; box-shadow:0 8px 24px rgba(0,0,0,.45); pointer-events:none; opacity:0; transition:opacity .15s ease}
+#tooltip.visible{opacity:1}
 
-// Arco de espuma + partículazinhas leves
-const arch = new THREE.Mesh(new THREE.TorusGeometry(1.4, 0.05, 12, 48, Math.PI),
-  new THREE.MeshStandardMaterial({ color: 0xcfd8dc, metalness: .1, roughness: .8 }));
-arch.rotation.z = Math.PI; arch.rotation.y = Math.PI / 2; arch.position.set(-3, 1.4, 0); gWash.add(arch);
-const foam = foamParticles(new THREE.Vector3(-3, 1.2, 0)); gWash.add(foam);
+/* Listas */
+.blk{margin-top:10px}
+.blk summary{cursor:pointer; color:#cdd3e0; font-size:12px}
+.list{margin:8px 0 0 18px; font-size:12px; color:#d7dcee; line-height:1.4}
 
-// Bancada / espera + cones
-const bench = meshBox(2.2, 0.1, 0.7, 0x424242); bench.position.set(-6.5, 0.55, 2.6); gWash.add(bench);
-const legsGeom = new THREE.CylinderGeometry(0.05, 0.05, 0.6, 12);
-function leg(dx, dz) { const l = new THREE.Mesh(legsGeom, new THREE.MeshStandardMaterial({ color: 0x2b2b2b })); l.position.set(-6.5 + dx, 0.3, 2.6 + dz); gWash.add(l); }
-leg(-1, -0.3); leg(1, -0.3); leg(-1, 0.3); leg(1, 0.3);
-
-addCone(-1.8, -2.2); addCone(-1.8, 2.2); addCone(1.8, -2.2); addCone(1.8, 2.2);
-
-// =======================================
-// Chuva (partículas simples)
-const rain = (() => {
-  const COUNT = 600;
-  const rainGeo = new THREE.BufferGeometry();
-  const rainPos = new Float32Array(COUNT * 3);
-  for (let i = 0; i < COUNT; i++) {
-    rainPos[i * 3 + 0] = THREE.MathUtils.randFloatSpread(L + 2);
-    rainPos[i * 3 + 1] = H + 5 + Math.random() * 3;
-    rainPos[i * 3 + 2] = THREE.MathUtils.randFloatSpread(W + 2);
-  }
-  rainGeo.setAttribute('position', new THREE.BufferAttribute(rainPos, 3));
-  const rainMat = new THREE.PointsMaterial({ color: waterColor, size: 0.06, transparent: true, opacity: .9 });
-  const points = new THREE.Points(rainGeo, rainMat);
-  points.userData = { COUNT };
-  return points;
-})();
-scene.add(rain);
-
-// =======================================
-// Interações (hover/touch com tooltip)
-const selectable = [roof, gutterMain, gutterFront, downspout, pipe1, filter, pump, manhole, car, arch, washer,
-  ...gStructure.children.filter(m => m.geometry?.type === 'CylinderGeometry' && Math.abs((m.geometry.parameters?.height || 0) - H) < 1e-6)];
-const raycaster = new THREE.Raycaster();
-const mouse = new THREE.Vector2();
-let highlighted = null;
-
-const tip = document.createElement('div');
-tip.id = 'tooltip'; tip.setAttribute('role', 'status'); tip.setAttribute('aria-live', 'polite');
-document.body.appendChild(tip);
-let tipTimer = null;
-
-function showTip(html, x, y) {
-  tip.innerHTML = html; tip.classList.add('visible');
-  const pad = 14; const w = tip.offsetWidth, h = tip.offsetHeight;
-  const tx = Math.min(Math.max(x + 12, pad), innerWidth - w - pad);
-  const ty = Math.min(Math.max(y + 12, pad), innerHeight - h - pad);
-  tip.style.transform = `translate(${tx}px,${ty}px)`;
+/* iPad/touch */
+@media (pointer:coarse) {
+  .topbar{inset:12px auto auto 12px}
+  .panel{right:12px; top:12px; width:384px}
+  .panel.sustain{right:12px; bottom:12px; width:384px}
+  .camgrid{grid-template-columns:repeat(3,56px); gap:10px}
+  .camgrid button{height:48px; font-size:18px}
+  .btn{padding:12px 14px; font-size:16px}
 }
-function hideTip() { tip.classList.remove('visible'); tip.style.transform = 'translate(-9999px,-9999px)'; }
-
-function pick(e) {
-  mouse.x = (e.clientX / innerWidth) * 2 - 1;
-  mouse.y = -(e.clientY / innerHeight) * 2 + 1;
-  raycaster.setFromCamera(mouse, camera);
-  const hit = raycaster.intersectObjects(selectable, true)[0];
-  if (!hit) { hideTip(); if (highlighted) { highlighted.material?.emissive?.setHex(0x000000); highlighted = null; } return; }
-  const m = hit.object;
-  const name = m.userData?.name || 'Elemento';
-  const desc = m.userData?.desc ? `<div style='opacity:.85; margin-top:2px'>${m.userData.desc}</div>` : '';
-  showTip(`<b>${name}</b>${desc}`, e.clientX, e.clientY);
-  if (highlighted && highlighted !== m) { highlighted.material?.emissive?.setHex(0x000000); }
-  if (m.material && 'emissive' in m.material) { m.material.emissive.setHex(0x2255ff); highlighted = m; }
-}
-
-window.addEventListener('pointermove', pick, { passive: true });
-window.addEventListener('pointerdown', (e) => { pick(e); clearTimeout(tipTimer); tipTimer = setTimeout(hideTip, 2200); }, { passive: true });
-
-// =======================================
-// Controles / Export / Responsivo
-const $ = (id) => document.getElementById(id);
-const toggleWater = $('toggleWater');
-const toggleRain  = $('toggleRain');
-const toggleLabels = $('toggleLabels');
-const toggleAuto = $('toggleAuto');
-const speed = $('speed');
-const speedVal = $('speedVal');
-const camUp = $('camUp'), camDown = $('camDown'), camLeft = $('camLeft'), camRight = $('camRight'), camReset = $('camReset');
-const exportBtn = $('export');
-
-toggleWater.addEventListener('change', () => { gWater.visible = toggleWater.checked; });
-toggleRain.addEventListener('change',  () => { rain.visible = toggleRain.checked; });
-toggleLabels.addEventListener('change', () => { gLabels.visible = toggleLabels.checked; });
-
-toggleAuto.addEventListener('change', () => { controls.autoRotate = toggleAuto.checked; });
-speed.addEventListener('input', () => { controls.autoRotateSpeed = parseFloat(speed.value); speedVal.textContent = speed.value; });
-
-const spherical = new THREE.Spherical();
-const offset = new THREE.Vector3();
-const EPS = 0.001;
-function nudgeCamera(deltaTheta, deltaPhi) {
-  offset.copy(camera.position).sub(controls.target);
-  spherical.setFromVector3(offset);
-  spherical.theta += deltaTheta;
-  spherical.phi += deltaPhi;
-  spherical.phi = Math.max(EPS, Math.min(Math.PI - EPS, spherical.phi));
-  offset.setFromSpherical(spherical);
-  camera.position.copy(controls.target).add(offset);
-  camera.lookAt(controls.target);
-  controls.update();
-}
-const STEP = THREE.MathUtils.degToRad(10);
-camLeft.addEventListener('click', () => nudgeCamera( STEP, 0));
-camRight.addEventListener('click', () => nudgeCamera(-STEP, 0));
-camUp.addEventListener('click', () => nudgeCamera(0, -STEP));
-camDown.addEventListener('click', () => nudgeCamera(0,  STEP));
-camReset.addEventListener('click', () => { camera.position.set(14, 10, 14); controls.target.set(0, 2.2, 0); controls.update(); });
-
-exportBtn.addEventListener('click', () => {
-  const url = renderer.domElement.toDataURL('image/png');
-  const a = document.createElement('a'); a.href = url; a.download = 'maquete-oficina.png'; a.click();
-});
-
-addEventListener('resize', () => {
-  camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix();
-  renderer.setSize(innerWidth, innerHeight); labelRenderer.setSize(innerWidth, innerHeight);
-}, { passive: true });
-
-// =======================================
-// Sustentabilidade – calculadora simples (dados padrão p/ Santo André)
-/*
-  Fontes de referência (valores variam por metodologia; usar como faixa):
-  - ClimaTempo (soma mensal) ~ 2118 mm/ano.
-  - Weather-and-Climate ~ 1883 mm/ano.
-  - Met Office (São Paulo capital) ~ 1457 mm/ano.
-  => Presets: 1500 (conservador), 1880 (médio), 2118 (úmido).
-*/
-const roofArea = $('roofArea');
-const runoff = $('runoff');
-const lossPct = $('lossPct');
-const rainAnnual = $('rainAnnual');
-const litersPerWash = $('litersPerWash');
-const washesPerDay = $('washesPerDay');
-const capYear = $('capYear');
-const capDay = $('capDay');
-const demDay = $('demDay');
-const coverage = $('coverage');
-
-[roofArea, runoff, lossPct, rainAnnual, litersPerWash, washesPerDay].forEach(el => el.addEventListener('input', updateSustain, { passive: true }));
-updateSustain();
-
-function updateSustain() {
-  const A = clamp(+roofArea.value || 0, 1, 10000);
-  const C = clamp(+runoff.value || 0.8, 0.1, 0.98);
-  const Loss = clamp(+lossPct.value || 10, 0, 50) / 100;
-  const Rmm = clamp(+rainAnnual.value || 1880, 200, 4000);
-  const Rm = Rmm / 1000;
-
-  const Vyear_m3 = A * C * Rm * (1 - Loss);
-  const Vyear_L = Vyear_m3 * 1000;
-  const Vday_L = Vyear_L / 365;
-
-  const Lwash = clamp(+litersPerWash.value || 80, 10, 1000);
-  const washes = clamp(+washesPerDay.value || 20, 1, 1000);
-  const demand_L = Lwash * washes;
-
-  capYear.textContent = fmtL(Vyear_L);
-  capDay.textContent = fmtL(Vday_L);
-  demDay.textContent = fmtL(demand_L);
-
-  const cov = demand_L ? Math.min(100, (Vday_L / demand_L) * 100) : 0;
-  coverage.textContent = cov.toFixed(0) + '%';
-}
-
-// =======================================
-// Loop
-let t = 0; const clock = new THREE.Clock();
-function animate() {
-  requestAnimationFrame(animate);
-  const dt = clock.getDelta(); t += dt;
-
-  controls.update();
-
-  // Anima linhas tracejadas (fluxo)
-  gWater.traverse(obj => {
-    if (obj.material && obj.material.isLineDashedMaterial) {
-      obj.material.dashOffset = -t * 1.2; obj.material.needsUpdate = true;
-    }
-  });
-
-  // Chuva descendo
-  const arr = rain.geometry.attributes.position.array;
-  const COUNT = rain.userData.COUNT;
-  for (let i = 0; i < COUNT; i++) {
-    arr[i * 3 + 1] -= 6 * dt;
-    if (arr[i * 3 + 1] < H + 0.25) {
-      arr[i * 3 + 0] = THREE.MathUtils.randFloatSpread(L + 2);
-      arr[i * 3 + 1] = H + 5 + Math.random() * 3;
-      arr[i * 3 + 2] = THREE.MathUtils.randFloatSpread(W + 2);
-    }
-  }
-  rain.geometry.attributes.position.needsUpdate = true;
-
-  renderer.render(scene, camera);
-  labelRenderer.render(scene, camera);
-}
-animate();
-
-// =======================================
-// Testes automáticos (mantidos + extras)
-const testsEl = document.getElementById('tests');
-const rerunBtn = document.getElementById('rerun');
-rerunBtn.addEventListener('click', runTests);
-
-function ok(msg){ return `<div class="ok">✔ ${msg}</div>` }
-function bad(msg){ return `<div class="bad">✘ ${msg}</div>` }
-
-function runTests(){
-  const out = [];
-  try{
-    out.push(scene ? ok('Cena criada') : bad('Cena não criada'));
-    out.push(camera ? ok('Câmera criada') : bad('Câmera ausente'));
-    out.push(renderer ? ok('Renderer WebGL OK') : bad('Renderer não inicializado'));
-    const pillars = gStructure.children.filter(m=>m.geometry?.type==='CylinderGeometry' && Math.abs((m.geometry.parameters?.height||0)-H)<1e-6);
-    out.push(pillars.length===6 ? ok('6 pilares presentes') : bad(`Quantidade de pilares = ${pillars.length} (esperado 6)`));
-    out.push(roof ? ok('Telhado presente') : bad('Telhado ausente'));
-    out.push(gutterMain && downspout ? ok('Calhas/condutor presentes') : bad('Calhas/condutor ausentes'));
-    out.push(tank ? ok('Reservatório presente') : bad('Reservatório ausente'));
-    out.push(gWash.children.length>=10 ? ok('Elementos de lava-rápido presentes') : bad('Poucos elementos de lava-rápido'));
-    controls.autoRotate=true; controls.update();
-    out.push(controls.autoRotate ? ok('Auto-rotação habilitável') : bad('Falha ao habilitar auto-rotação'));
-    controls.autoRotate=false;
-    out.push(typeof renderer.domElement.toDataURL==='function' ? ok('Exportação PNG disponível') : bad('Exportação PNG indisponível'));
-    const before = camera.position.clone(); nudgeCamera(THREE.MathUtils.degToRad(5), 0); const moved = before.distanceTo(camera.position) > 1e-6; out.push(moved ? ok('Giro manual altera câmera') : bad('Giro manual não alterou câmera'));
-    out.push(document.getElementById('tooltip') ? ok('Tooltip presente') : bad('Tooltip ausente'));
-    out.push(typeof window.showTip==='function' ? ok('Função de tooltip disponível') : bad('Função de tooltip indisponível'));
-    // Novos testes
-    out.push((tank.position.y < 0) ? ok('Reservatório está subterrâneo (y<0)') : bad('Reservatório não está subterrâneo'));
-    out.push($('roofArea') && $('rainAnnual') ? ok('UI sustentabilidade presente') : bad('UI sustentabilidade ausente'));
-    const prev = capYear.textContent; updateSustain(); out.push(capYear.textContent ? ok('Cálculo de captação executou') : bad('Falha no cálculo de captação'));
-  }catch(e){ out.push(bad('Exceção nos testes: '+e.message)); }
-  testsEl.innerHTML = out.join('');
-  console.table({ washItems: gWash.children.length, waterLines: gWater.children.length });
-}
-runTests(); // on load
-
-// =======================================
-// Utilitários
-function getVar(name){ return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
-function meshBox(x,y,z,color,opts={}){ return new THREE.Mesh(new THREE.BoxGeometry(x,y,z), new THREE.MeshStandardMaterial({ color, ...opts })); }
-function cyl(r,h,seg=24,color=null){
-  return new THREE.Mesh(
-    new THREE.CylinderGeometry(r,r,h,seg),
-    new THREE.MeshStandardMaterial({ color: color ?? new THREE.Color(getVar('--gutter')), metalness:.6, roughness:.3 })
-  );
-}
-function addLane(x,z,w,l){
-  const m = meshBox(w, 0.02, l, 0xffd54f, { emissive: 0x3a2a00, roughness: .6 });
-  m.position.set(x, 0.011, z); gWash.add(m); return m;
-}
-function addCone(x,z){
-  const cone = new THREE.Group();
-  const base = new THREE.Mesh(new THREE.CylinderGeometry(0.28,0.32,0.06,24), new THREE.MeshStandardMaterial({color:0x202020}));
-  const body = new THREE.Mesh(new THREE.ConeGeometry(0.18,0.5,24), new THREE.MeshStandardMaterial({color:0xff6d00}));
-  body.position.y = 0.28; cone.add(base, body); cone.position.set(x,0,z); gWash.add(cone); return cone;
-}
-function foamParticles(center){
-  const g = new THREE.BufferGeometry();
-  const COUNT = 120;
-  const arr = new Float32Array(COUNT*3);
-  for(let i=0;i<COUNT;i++){
-    arr[i*3+0] = center.x + THREE.MathUtils.randFloatSpread(1.2);
-    arr[i*3+1] = center.y + Math.random()*0.6;
-    arr[i*3+2] = center.z + THREE.MathUtils.randFloatSpread(0.6);
-  }
-  g.setAttribute('position', new THREE.BufferAttribute(arr,3));
-  const m = new THREE.PointsMaterial({ size: 0.05, color: 0xffffff, transparent: true, opacity: 0.7 });
-  const pts = new THREE.Points(g,m);
-  return pts;
-}
-function fmtL(v){ // formata litros com separador
-  if(!isFinite(v)) return '—';
-  return new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 0 }).format(v) + ' L';
-}
-function clamp(v,min,max){ return Math.min(max, Math.max(min, v)); }
